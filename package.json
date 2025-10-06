@@ -11,9 +11,7 @@
     "dev:http": "vite --host --port 5176",
     "generate-ssl": "node generate-ssl.js",
     "build": "tsc && vite build",
-    "build:production": "NODE_ENV=production npm run build",
     "preview": "vite preview",
-    "start:production": "npm run build:production && npm run preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "test": "jest",
@@ -48,7 +46,6 @@
     "helmet-csp": "^4.0.0",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
-    "lucide-react": "^0.539.0",
     "multer": "^2.0.1",
     "node-cache": "^5.1.2",
     "node-fetch": "^3.3.2",
@@ -59,7 +56,6 @@
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.51.5",
-    "react-hot-toast": "^2.5.2",
     "react-router-dom": "^6.23.1",
     "recharts": "^2.12.7",
     "redis": "^5.6.0",
@@ -79,13 +75,14 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/testing-library__jest-dom": "^5.14.9",
-    "@typescript-eslint/eslint-plugin": "^7.2.0",
-    "@typescript-eslint/parser": "^7.2.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.4.19",
     "concurrently": "^8.2.2",
     "cypress": "^13.6.6",
     "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsx-a11y": "^6.8.0",
     "eslint-plugin-prettier": "^5.1.3",
@@ -112,13 +109,6 @@
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     },
-    "transformIgnorePatterns": [
-      "node_modules/(?!(@google/genai|other-esm-packages)/)"
-    ],
-    "testPathIgnorePatterns": [
-      "<rootDir>/backend/",
-      "<rootDir>/node_modules/"
-    ],
     "collectCoverageFrom": [
       "src/**/*.{ts,tsx}",
       "!src/**/*.d.ts",
@@ -127,10 +117,10 @@
     ],
     "coverageThreshold": {
       "global": {
-        "branches": 60,
-        "functions": 60,
-        "lines": 60,
-        "statements": 60
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
       }
     }
   },
