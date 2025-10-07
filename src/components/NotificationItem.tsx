@@ -1,7 +1,7 @@
-
 import React from 'react';
-import { AlertLogEntry, AlertSeverity } from '@/types';
+
 import { WarningIcon, InfoIcon } from '@/constants';
+import { AlertLogEntry, AlertSeverity } from '@/types';
 
 interface NotificationItemProps {
   notification: AlertLogEntry;
@@ -9,7 +9,11 @@ interface NotificationItemProps {
   onViewDetails?: (link: string) => void; // Optional: to navigate
 }
 
-const NotificationItemInner: React.FC<NotificationItemProps> = ({ notification, onMarkAsRead, onViewDetails }) => {
+const NotificationItemInner: React.FC<NotificationItemProps> = ({
+  notification,
+  onMarkAsRead,
+  onViewDetails,
+}) => {
   const getSeverityStyles = () => {
     switch (notification.severity) {
       case AlertSeverity.Error:
@@ -41,26 +45,28 @@ const NotificationItemInner: React.FC<NotificationItemProps> = ({ notification, 
   const styles = getSeverityStyles();
 
   return (
-    <div 
+    <div
       className={`p-4 rounded-lg shadow-sm border-l-4 ${styles.borderColor} ${styles.bgColor} ${!notification.isRead ? 'font-semibold' : ''}`}
     >
       <div className="flex items-start">
-        <div className="flex-shrink-0 mr-3">
-          {styles.icon}
-        </div>
+        <div className="flex-shrink-0 mr-3">{styles.icon}</div>
         <div className="flex-1">
           <div className="flex justify-between items-center">
-            <p className={`text-sm font-medium ${styles.textColor}`}>{notification.type}</p>
+            <p className={`text-sm font-medium ${styles.textColor}`}>
+              {notification.type}
+            </p>
             <p className="text-xs text-secondary-500 dark:text-secondary-400">
               {new Date(notification.timestamp).toLocaleString()}
             </p>
           </div>
-          <p className={`mt-1 text-sm ${styles.textColor} ${!notification.isRead ? '' : 'font-normal'}`}>
+          <p
+            className={`mt-1 text-sm ${styles.textColor} ${!notification.isRead ? '' : 'font-normal'}`}
+          >
             {notification.message}
           </p>
           <div className="mt-2 flex space-x-3">
             {notification.detailsLink && onViewDetails && (
-              <button 
+              <button
                 onClick={() => onViewDetails(notification.detailsLink!)}
                 className="text-xs text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-200"
               >
@@ -68,12 +74,12 @@ const NotificationItemInner: React.FC<NotificationItemProps> = ({ notification, 
               </button>
             )}
             {!notification.isRead && onMarkAsRead && (
-               <button 
+              <button
                 onClick={() => onMarkAsRead(notification.id)}
                 className="text-xs text-secondary-500 hover:text-secondary-700 dark:text-secondary-400 dark:hover:text-secondary-200"
-               >
+              >
                 Mark as Read
-               </button>
+              </button>
             )}
           </div>
         </div>

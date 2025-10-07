@@ -1,7 +1,6 @@
-
-
 // This file now acts as a clean re-export for the canonical useVendor hook.
 import { useContext } from 'react';
+
 import VendorContext, { VendorContextType } from '@/contexts/VendorContext';
 
 export const useVendor = (): VendorContextType => {

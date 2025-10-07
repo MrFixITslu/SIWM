@@ -1,5 +1,6 @@
-import { WarehouseOrder, OrderItem, OrderStatus } from '@/types';
 import { api } from './apiHelper';
+
+import { WarehouseOrder, OrderItem, OrderStatus } from '@/types';
 
 export const orderService = {
   getOrders: (): Promise<WarehouseOrder[]> => {
@@ -10,12 +11,23 @@ export const orderService = {
     return api.get(`/orders/${id}`);
   },
 
-  createOrder: (orderData: Omit<WarehouseOrder, 'id' | 'createdAt' | 'status'> & { status?: WarehouseOrder['status'], items: Array<Omit<OrderItem, 'name'>> }): Promise<WarehouseOrder> => {
-    const payload = { ...orderData, status: orderData.status || OrderStatus.Pending };
+  createOrder: (
+    orderData: Omit<WarehouseOrder, 'id' | 'createdAt' | 'status'> & {
+      status?: WarehouseOrder['status'];
+      items: Array<Omit<OrderItem, 'name'>>;
+    }
+  ): Promise<WarehouseOrder> => {
+    const payload = {
+      ...orderData,
+      status: orderData.status || OrderStatus.Pending,
+    };
     return api.post('/orders', payload);
   },
 
-  updateOrder: (id: number, orderData: Partial<WarehouseOrder>): Promise<WarehouseOrder> => {
+  updateOrder: (
+    id: number,
+    orderData: Partial<WarehouseOrder>
+  ): Promise<WarehouseOrder> => {
     return api.put(`/orders/${id}`, orderData);
   },
 
@@ -33,5 +45,5 @@ export const orderService = {
 
   confirmReceipt: (orderId: number): Promise<WarehouseOrder> => {
     return api.post(`/orders/${orderId}/confirm-receipt`, {});
-  }
+  },
 };

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 
 type ConfirmationAction = () => void | Promise<void>;
@@ -10,14 +9,19 @@ interface ConfirmationOptions {
 
 const useConfirmationModal = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [onConfirmAction, setOnConfirmAction] = useState<{ action: ConfirmationAction } | null>(null);
+  const [onConfirmAction, setOnConfirmAction] = useState<{
+    action: ConfirmationAction;
+  } | null>(null);
   const [confirmButtonText, setConfirmButtonText] = useState('Confirm Delete');
 
-  const showConfirmation = useCallback((action: ConfirmationAction, options?: ConfirmationOptions) => {
-    setOnConfirmAction({ action });
-    setConfirmButtonText(options?.confirmText || 'Confirm Delete');
-    setIsOpen(true);
-  }, []);
+  const showConfirmation = useCallback(
+    (action: ConfirmationAction, options?: ConfirmationOptions) => {
+      setOnConfirmAction({ action });
+      setConfirmButtonText(options?.confirmText || 'Confirm Delete');
+      setIsOpen(true);
+    },
+    []
+  );
 
   const handleConfirm = useCallback(() => {
     onConfirmAction?.action();

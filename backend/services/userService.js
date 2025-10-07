@@ -34,13 +34,13 @@ const findUserById = async (id) => {
   if (isNaN(userId) || userId <= 0) {
       throw new Error('Invalid user ID format');
   }
-  const res = await pool.query('SELECT id, name, email, role, status, contact_number, created_at, updated_at, permissions FROM users WHERE id = $1', [userId]);
+  const res = await pool.query('SELECT id, name, email, role, status, contact_number, created_at, updated_at, permissions, email_notifications_enabled FROM users WHERE id = $1', [userId]);
   return mapToCamel(res.rows[0]); // Map to camelCase for application use
 };
 
 const getUsers = async (filters = {}) => {
   const pool = getPool();
-  let query = 'SELECT id, name, email, role, status, contact_number, created_at, permissions FROM users';
+  let query = 'SELECT id, name, email, role, status, contact_number, created_at, permissions, email_notifications_enabled FROM users';
   const conditions = [];
   const values = [];
   let paramIndex = 1;
@@ -150,6 +150,9 @@ const updateUser = async (userId, dataToUpdate, actingAdminId) => {
   if (dataToUpdate.permissions) sanitizedData.permissions = dataToUpdate.permissions;
   if (dataToUpdate.status && VALID_STATUSES.includes(dataToUpdate.status)) {
     sanitizedData.status = dataToUpdate.status;
+  }
+  if (dataToUpdate.email_notifications_enabled !== undefined) {
+    sanitizedData.email_notifications_enabled = Boolean(dataToUpdate.email_notifications_enabled);
   }
 
   const dbData = mapToSnake(sanitizedData);

@@ -1,7 +1,15 @@
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+  useMemo,
+  useContext,
+} from 'react';
 
-import React, { createContext, useState, useEffect, useCallback, ReactNode, useMemo, useContext } from 'react';
-import { assetService } from '@/services/assetService';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { assetService } from '@/services/assetService';
 import { WarehouseAsset } from '@/types';
 
 interface AssetContextType {
@@ -12,7 +20,9 @@ interface AssetContextType {
 
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
 
-export const AssetProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AssetProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [assets, setAssets] = useState<WarehouseAsset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +34,7 @@ export const AssetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const items = await assetService.getAssets();
       setAssets(items);
     } catch (err: any) {
-      setError(err.message || "Failed to fetch asset data.");
+      setError(err.message || 'Failed to fetch asset data.');
     } finally {
       setIsLoading(false);
     }
@@ -40,29 +50,39 @@ export const AssetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   const handleAssetUpdated = useCallback((updatedAsset: WarehouseAsset) => {
-    setAssets(prev => prev.map(item => item.id === updatedAsset.id ? updatedAsset : item));
+    setAssets(prev =>
+      prev.map(item => (item.id === updatedAsset.id ? updatedAsset : item))
+    );
   }, []);
 
   const handleAssetDeleted = useCallback((data: { id: number }) => {
     setAssets(prev => prev.filter(item => item.id !== data.id));
   }, []);
 
-  const realtimeHandlers = useMemo(() => ({
-    'asset_created': handleAssetCreated,
-    'asset_updated': handleAssetUpdated,
-    'asset_deleted': handleAssetDeleted,
-  }), [handleAssetCreated, handleAssetUpdated, handleAssetDeleted]);
+  const realtimeHandlers = useMemo(
+    () => ({
+      asset_created: handleAssetCreated,
+      asset_updated: handleAssetUpdated,
+      asset_deleted: handleAssetDeleted,
+    }),
+    [handleAssetCreated, handleAssetUpdated, handleAssetDeleted]
+  );
 
   useRealtimeUpdates(realtimeHandlers);
   // --- End of real-time updates ---
 
-  const value = useMemo(() => ({
-    assets,
-    isLoading,
-    error,
-  }), [assets, isLoading, error]);
+  const value = useMemo(
+    () => ({
+      assets,
+      isLoading,
+      error,
+    }),
+    [assets, isLoading, error]
+  );
 
-  return <AssetContext.Provider value={value}>{children}</AssetContext.Provider>;
+  return (
+    <AssetContext.Provider value={value}>{children}</AssetContext.Provider>
+  );
 };
 
 export const useAsset = (): AssetContextType => {

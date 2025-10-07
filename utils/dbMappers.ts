@@ -7,10 +7,8 @@
  */
 const toCamel = (s: string): string => {
   if (typeof s !== 'string') return s;
-  return s.replace(/([-_][a-z])/ig, ($1) => {
-    return $1.toUpperCase()
-      .replace('-', '')
-      .replace('_', '');
+  return s.replace(/([-_][a-z])/gi, $1 => {
+    return $1.toUpperCase().replace('-', '').replace('_', '');
   });
 };
 
@@ -24,10 +22,13 @@ export const mapToCamel = (obj: any): any => {
     return obj.map(v => mapToCamel(v));
   }
   if (obj !== null && typeof obj === 'object' && !(obj instanceof Date)) {
-    return Object.keys(obj).reduce((result, key) => {
-      result[toCamel(key)] = mapToCamel(obj[key]);
-      return result;
-    }, {} as {[key: string]: any});
+    return Object.keys(obj).reduce(
+      (result, key) => {
+        result[toCamel(key)] = mapToCamel(obj[key]);
+        return result;
+      },
+      {} as { [key: string]: any }
+    );
   }
   return obj;
 };

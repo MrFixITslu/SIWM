@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +11,7 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
+import React from 'react';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 
 // Register Chart.js components
@@ -95,7 +95,10 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
         data: [
           itemsBelowReorderPoint.length,
           itemsAtRiskOfStockOut.length,
-          Math.max(0, 100 - itemsBelowReorderPoint.length - itemsAtRiskOfStockOut.length), // Placeholder
+          Math.max(
+            0,
+            100 - itemsBelowReorderPoint.length - itemsAtRiskOfStockOut.length
+          ), // Placeholder
         ],
         backgroundColor: [
           'rgba(239, 68, 68, 0.8)',
@@ -237,7 +240,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
         displayColors: false,
         padding: 12,
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             return `${context.parsed.y}%`;
           },
         },
@@ -262,7 +265,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
           font: {
             size: 11,
           },
-          callback: function(value: any) {
+          callback: function (value: any) {
             return value + '%';
           },
         },
@@ -311,4 +314,4 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({
   );
 };
 
-export default DashboardCharts; 
+export default DashboardCharts;

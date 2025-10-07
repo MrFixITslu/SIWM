@@ -1,6 +1,6 @@
+import { BASE_API_URL, getCommonHeaders } from './apiConfig'; // Assuming BASE_API_URL is configured
 
 import { ChatMessage } from '@/types';
-import { BASE_API_URL, getCommonHeaders } from './apiConfig'; // Assuming BASE_API_URL is configured
 
 class GeminiService {
   // No local AI or Chat instance needed anymore
@@ -9,7 +9,11 @@ class GeminiService {
     // Constructor can be empty or perform other initializations if needed
   }
 
-  public async sendChatMessageStream(message: string, history: ChatMessage[], signal?: AbortSignal): Promise<AsyncIterable<string>> {
+  public async sendChatMessageStream(
+    message: string,
+    history: ChatMessage[],
+    signal?: AbortSignal
+  ): Promise<AsyncIterable<string>> {
     try {
       const response = await fetch(`${BASE_API_URL}/gemini/chat/stream`, {
         method: 'POST',
@@ -20,8 +24,13 @@ class GeminiService {
 
       if (!response.ok) {
         // Attempt to parse error from backend
-        const errorData = await response.json().catch(() => ({ message: `Chat stream failed with status: ${response.status}` }));
-        throw new Error(errorData.message || `Chat stream failed with status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({
+          message: `Chat stream failed with status: ${response.status}`,
+        }));
+        throw new Error(
+          errorData.message ||
+            `Chat stream failed with status: ${response.status}`
+        );
       }
 
       if (!response.body) {
@@ -45,7 +54,6 @@ class GeminiService {
         }
       }
       return streamGenerator();
-
     } catch (error: any) {
       if (error.name === 'AbortError') {
         console.log('Chat stream aborted by user.');
@@ -53,9 +61,9 @@ class GeminiService {
         async function* emptyStream() {}
         return emptyStream();
       }
-      console.error("Error sending message via backend stream:", error);
+      console.error('Error sending message via backend stream:', error);
       async function* errorStream() {
-        yield `Sorry, I encountered an error: ${error.message || "Please try again later."}`;
+        yield `Sorry, I encountered an error: ${error.message || 'Please try again later.'}`;
       }
       return errorStream();
     }

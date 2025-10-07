@@ -76,7 +76,7 @@ const createASN = async (asnData) => { // Expects camelCase
 
   const { 
     supplier, expected_arrival, item_count, carrier, status, po_number, department, 
-    po_file_data, po_file_name, vendor_invoice_data, vendor_invoice_name, 
+    quote_file_data, quote_file_name, po_file_data, po_file_name, vendor_invoice_data, vendor_invoice_name, 
     shipping_invoice_data, shipping_invoice_name, bill_of_lading_data, bill_of_lading_name,
     broker_id, broker_name, fee_status
   } = dbData;
@@ -98,13 +98,13 @@ const createASN = async (asnData) => { // Expects camelCase
     const asnRes = await client.query(
       `INSERT INTO asns (
         supplier, expected_arrival, status, item_count, carrier, po_number, department, 
-        po_file_data, po_file_name, vendor_invoice_data, vendor_invoice_name, 
+        quote_file_data, quote_file_name, po_file_data, po_file_name, vendor_invoice_data, vendor_invoice_name, 
         shipping_invoice_data, shipping_invoice_name, bill_of_lading_data, bill_of_lading_name,
         broker_id, broker_name, fee_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *`,
       [
         supplier, expected_arrival, status, item_count, carrier, po_number, department,
-        po_file_data || null, po_file_name || null, vendor_invoice_data || null, vendor_invoice_name || null,
+        quote_file_data || null, quote_file_name || null, po_file_data || null, po_file_name || null, vendor_invoice_data || null, vendor_invoice_name || null,
         shipping_invoice_data || null, shipping_invoice_name || null, bill_of_lading_data || null, bill_of_lading_name || null,
         broker_id || null, broker_name || null, fee_status
       ]
@@ -129,8 +129,9 @@ const createASN = async (asnData) => { // Expects camelCase
 
     // --- Send Email Notification ---
     try {
+        const { sendNotificationToEnabledUsers } = require('./notificationHelper');
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-        const subject = `New Incoming Shipment Notification - P.O. #${newASN.poNumber}`;
+        const subject = `New Incoming Shipment - ${newASN.poNumber}`;
         const htmlBody = `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">
                 <h2>New Incoming Shipment Received</h2>
@@ -166,11 +167,12 @@ const createASN = async (asnData) => { // Expects camelCase
             </div>
         `;
         
-        await sendEmail({
-            to: 'lc_procurement@digicelgroup.com',
+        // Send to users with email notifications enabled (filter by relevant roles)
+        await sendNotificationToEnabledUsers({
             subject,
             html: htmlBody,
-        });
+        }, ['admin', 'manager', 'Warehouse', 'Broker']);
+        
     } catch (emailError) {
         console.error('An error occurred while attempting to send the shipment notification email:', emailError);
     }
@@ -201,7 +203,12 @@ const updateASN = async (id, updatedData, actingUserId = null) => { // Expects c
   for (const key in dbData) {
       if (Object.prototype.hasOwnProperty.call(dbData, key) && key !== 'id' && key !== 'items') {
           fields.push(`${key} = $${paramCount++}`);
-          values.push(dbData[key]);
+          // Convert JSON objects to strings for JSON fields
+          let value = dbData[key];
+          if ((key === 'fees' || key === 'fee_status_history') && typeof value === 'object' && value !== null) {
+              value = JSON.stringify(value);
+          }
+          values.push(value);
       }
   }
 
@@ -533,6 +540,7 @@ const completeShipment = async (asnId, userId) => {
         const updatedAsn = await getASNById(asnId);
         // Send email notification
         try {
+            const { sendNotificationToEnabledUsers } = require('./notificationHelper');
             const subject = `Shipment Completed - P.O. #${asn.po_number}`;
             let html = `<h2>Shipment Completed</h2>`;
             html += `<p>P.O. Number: <b>${asn.po_number}</b></p>`;
@@ -551,11 +559,13 @@ const completeShipment = async (asnId, userId) => {
             } else {
                 html += `<p>No discrepancies detected.</p>`;
             }
-            await sendEmail({
-                to: 'lc_procurement@digicel.com',
+            
+            // Send to users with email notifications enabled (filter by relevant roles)
+            await sendNotificationToEnabledUsers({
                 subject,
                 html
-            });
+            }, ['admin', 'manager', 'Warehouse', 'Broker']);
+            
         } catch (emailErr) {
             console.error('Error sending completion email:', emailErr);
         }

@@ -21,22 +21,30 @@ class ServiceWorkerManager {
         // Check if we're in development mode with HTTPS
         const isDevelopment = import.meta.env.DEV;
         const isHttps = window.location.protocol === 'https:';
-        
+
         // In development with HTTPS, skip service worker registration to avoid SSL issues
         if (isDevelopment && isHttps) {
-          console.log('Skipping Service Worker registration in HTTPS development mode to avoid SSL certificate issues');
+          console.log(
+            'Skipping Service Worker registration in HTTPS development mode to avoid SSL certificate issues'
+          );
           return;
         }
-        
+
         this.registration = await navigator.serviceWorker.register('/sw.js');
-        console.log('Service Worker registered successfully:', this.registration);
+        console.log(
+          'Service Worker registered successfully:',
+          this.registration
+        );
 
         // Handle service worker updates
         this.registration.addEventListener('updatefound', () => {
           const newWorker = this.registration!.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              if (
+                newWorker.state === 'installed' &&
+                navigator.serviceWorker.controller
+              ) {
                 this.showUpdateNotification();
               }
             });
@@ -48,7 +56,6 @@ class ServiceWorkerManager {
           console.log('Service Worker controller changed');
           window.location.reload();
         });
-
       } catch (error) {
         console.error('Service Worker registration failed:', error);
         // Don't throw the error, just log it to prevent app crashes
@@ -74,7 +81,7 @@ class ServiceWorkerManager {
     if (this.registration && 'sync' in this.registration) {
       (this.registration as any).sync.register('background-sync');
     }
-    
+
     // Show online notification
     this.showNotification('Connection restored', 'You are back online');
   }
@@ -87,7 +94,8 @@ class ServiceWorkerManager {
   private showUpdateNotification(): void {
     if (this.registration) {
       const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.className =
+        'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
       notification.innerHTML = `
         <div class="flex items-center">
           <span class="mr-3">🔄</span>
@@ -98,7 +106,7 @@ class ServiceWorkerManager {
         </div>
       `;
       document.body.appendChild(notification);
-      
+
       setTimeout(() => {
         notification.remove();
       }, 10000);
@@ -123,7 +131,7 @@ class ServiceWorkerManager {
     if (this.registration && this.registration.active) {
       this.registration.active.postMessage({
         type: 'STORE_OFFLINE_ACTION',
-        action
+        action,
       });
     }
   }
@@ -147,7 +155,10 @@ class ServiceWorkerManager {
 
 // Request caching strategies
 export class RequestCache {
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private cache = new Map<
+    string,
+    { data: any; timestamp: number; ttl: number }
+  >();
 
   async get<T>(key: string): Promise<T | null> {
     const cached = this.cache.get(key);
@@ -166,7 +177,7 @@ export class RequestCache {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
   }
 
@@ -219,9 +230,9 @@ export class BackgroundSyncManager {
         method: action.method,
         headers: {
           'Content-Type': 'application/json',
-          ...action.headers
+          ...action.headers,
         },
-        body: action.body ? JSON.stringify(action.body) : undefined
+        body: action.body ? JSON.stringify(action.body) : undefined,
       });
 
       if (!response.ok) {
@@ -237,7 +248,9 @@ export class BackgroundSyncManager {
 // Create singleton instances
 export const serviceWorkerManager = new ServiceWorkerManager();
 export const requestCache = new RequestCache();
-export const backgroundSyncManager = new BackgroundSyncManager(serviceWorkerManager);
+export const backgroundSyncManager = new BackgroundSyncManager(
+  serviceWorkerManager
+);
 
 // Initialize service worker
 export async function initializeServiceWorker(): Promise<void> {
@@ -245,4 +258,4 @@ export async function initializeServiceWorker(): Promise<void> {
 }
 
 // Export types
-export type { OfflineAction }; 
+export type { OfflineAction };

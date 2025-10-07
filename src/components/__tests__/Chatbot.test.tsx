@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import Chatbot from '../Chatbot';
+
 import { geminiService } from '@/services/geminiService';
 
 // Mock the geminiService
@@ -12,9 +14,15 @@ jest.mock('@/services/geminiService', () => ({
 
 // Mock the constants
 jest.mock('@/constants', () => ({
-  ChatIcon: ({ className }: { className: string }) => <div data-testid="chat-icon" className={className} />,
-  CloseIcon: ({ className }: { className: string }) => <div data-testid="close-icon" className={className} />,
-  PaperAirplaneIcon: ({ className }: { className: string }) => <div data-testid="paper-airplane-icon" className={className} />,
+  ChatIcon: ({ className }: { className: string }) => (
+    <div data-testid="chat-icon" className={className} />
+  ),
+  CloseIcon: ({ className }: { className: string }) => (
+    <div data-testid="close-icon" className={className} />
+  ),
+  PaperAirplaneIcon: ({ className }: { className: string }) => (
+    <div data-testid="paper-airplane-icon" className={className} />
+  ),
 }));
 
 const mockGeminiService = geminiService as jest.Mocked<typeof geminiService>;
@@ -36,8 +44,10 @@ describe('Chatbot', () => {
 
   it('renders chatbot toggle button with proper accessibility attributes', () => {
     render(<Chatbot />);
-    
-    const toggleButton = screen.getByRole('button', { name: /toggle chatbot/i });
+
+    const toggleButton = screen.getByRole('button', {
+      name: /toggle chatbot/i,
+    });
     expect(toggleButton).toBeInTheDocument();
     expect(toggleButton).toHaveAttribute('aria-label', 'Toggle Chatbot');
   });
@@ -45,13 +55,15 @@ describe('Chatbot', () => {
   it('opens chatbot when toggle button is clicked', async () => {
     const user = userEvent.setup();
     render(<Chatbot />);
-    
-    const toggleButton = screen.getByRole('button', { name: /toggle chatbot/i });
+
+    const toggleButton = screen.getByRole('button', {
+      name: /toggle chatbot/i,
+    });
     await user.click(toggleButton);
-    
+
     // Should show close icon when open (there are multiple close icons)
     expect(screen.getAllByTestId('close-icon')).toHaveLength(2);
-    
+
     // Should show input field
     const input = screen.getByRole('textbox', { name: /ask visionbot/i });
     expect(input).toBeInTheDocument();
@@ -60,10 +72,12 @@ describe('Chatbot', () => {
   it('displays welcome message when chatbot is opened for the first time', async () => {
     const user = userEvent.setup();
     render(<Chatbot />);
-    
-    const toggleButton = screen.getByRole('button', { name: /toggle chatbot/i });
+
+    const toggleButton = screen.getByRole('button', {
+      name: /toggle chatbot/i,
+    });
     await user.click(toggleButton);
-    
+
     expect(screen.getByText(/hello! i'm visionbot/i)).toBeInTheDocument();
   });
 
@@ -72,22 +86,24 @@ describe('Chatbot', () => {
     const mockStream = (async function* () {
       yield 'Hello! How can I help you?';
     })();
-    
+
     mockGeminiService.sendChatMessageStream.mockResolvedValue(mockStream);
-    
+
     render(<Chatbot />);
-    
+
     // Open chatbot
-    const toggleButton = screen.getByRole('button', { name: /toggle chatbot/i });
+    const toggleButton = screen.getByRole('button', {
+      name: /toggle chatbot/i,
+    });
     await user.click(toggleButton);
-    
+
     // Type and send message
     const input = screen.getByRole('textbox', { name: /ask visionbot/i });
     const sendButton = screen.getByRole('button', { name: /send message/i });
-    
+
     await user.type(input, 'Hello');
     await user.click(sendButton);
-    
+
     await waitFor(() => {
       expect(mockGeminiService.sendChatMessageStream).toHaveBeenCalledWith(
         'Hello',
@@ -100,16 +116,18 @@ describe('Chatbot', () => {
   it('handles keyboard navigation properly', async () => {
     const user = userEvent.setup();
     render(<Chatbot />);
-    
+
     // Open chatbot
-    const toggleButton = screen.getByRole('button', { name: /toggle chatbot/i });
+    const toggleButton = screen.getByRole('button', {
+      name: /toggle chatbot/i,
+    });
     await user.click(toggleButton);
-    
+
     const input = screen.getByRole('textbox', { name: /ask visionbot/i });
-    
+
     // Focus should be on input after opening
     expect(input).toHaveFocus();
-    
+
     // Should be able to type with keyboard
     await user.type(input, 'Test message');
     expect(input).toHaveValue('Test message');
@@ -117,23 +135,29 @@ describe('Chatbot', () => {
 
   it('handles errors gracefully', async () => {
     const user = userEvent.setup();
-    mockGeminiService.sendChatMessageStream.mockRejectedValue(new Error('API Error'));
-    
+    mockGeminiService.sendChatMessageStream.mockRejectedValue(
+      new Error('API Error')
+    );
+
     render(<Chatbot />);
-    
+
     // Open chatbot
-    const toggleButton = screen.getByRole('button', { name: /toggle chatbot/i });
+    const toggleButton = screen.getByRole('button', {
+      name: /toggle chatbot/i,
+    });
     await user.click(toggleButton);
-    
+
     // Send message
     const input = screen.getByRole('textbox', { name: /ask visionbot/i });
     const sendButton = screen.getByRole('button', { name: /send message/i });
-    
+
     await user.type(input, 'Hello');
     await user.click(sendButton);
-    
+
     await waitFor(() => {
-      expect(screen.getByText(/sorry, i encountered an error/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/sorry, i encountered an error/i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -142,21 +166,23 @@ describe('Chatbot', () => {
     const mockStream = (async function* () {
       yield 'Response from AI';
     })();
-    
+
     mockGeminiService.sendChatMessageStream.mockResolvedValue(mockStream);
-    
+
     render(<Chatbot />);
-    
+
     // Open chatbot and send message
-    const toggleButton = screen.getByRole('button', { name: /toggle chatbot/i });
+    const toggleButton = screen.getByRole('button', {
+      name: /toggle chatbot/i,
+    });
     await user.click(toggleButton);
-    
+
     const input = screen.getByRole('textbox', { name: /ask visionbot/i });
     const sendButton = screen.getByRole('button', { name: /send message/i });
-    
+
     await user.type(input, 'Test message');
     await user.click(sendButton);
-    
+
     await waitFor(() => {
       expect(window.sessionStorage.setItem).toHaveBeenCalled();
     });
@@ -165,17 +191,19 @@ describe('Chatbot', () => {
   it('has proper ARIA labels and roles', async () => {
     const user = userEvent.setup();
     render(<Chatbot />);
-    
+
     // Open chatbot
-    const toggleButton = screen.getByRole('button', { name: /toggle chatbot/i });
+    const toggleButton = screen.getByRole('button', {
+      name: /toggle chatbot/i,
+    });
     await user.click(toggleButton);
-    
+
     // Check for proper ARIA attributes
     const input = screen.getByRole('textbox', { name: /ask visionbot/i });
     const sendButton = screen.getByRole('button', { name: /send message/i });
-    
+
     // Input should have proper labeling (it uses a <label> element with htmlFor)
     expect(input).toBeInTheDocument();
     expect(sendButton).toHaveAttribute('aria-label', 'Send message');
   });
-}); 
+});

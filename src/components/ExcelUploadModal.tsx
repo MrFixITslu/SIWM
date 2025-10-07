@@ -1,18 +1,16 @@
-import React, { useState, useRef, useCallback } from 'react';
-import Modal from './Modal';
-import LoadingSpinner from './icons/LoadingSpinner';
-import ErrorMessage from './ErrorMessage';
-import Papa from 'papaparse';
 import ExcelJS from 'exceljs';
-import { 
-  ProcessedInventoryItem, 
-  skuGeneratorService 
+import Papa from 'papaparse';
+import React, { useState, useRef, useCallback } from 'react';
+
+import ErrorMessage from './ErrorMessage';
+import LoadingSpinner from './icons/LoadingSpinner';
+import Modal from './Modal';
+
+import { UploadIcon, SuccessIcon, ArrowPathIcon } from '@/constants';
+import {
+  ProcessedInventoryItem,
+  skuGeneratorService,
 } from '@/services/skuGeneratorService';
-import { 
-  UploadIcon, 
-  SuccessIcon, 
-  ArrowPathIcon
-} from '@/constants';
 
 interface ExcelUploadModalProps {
   isOpen: boolean;
@@ -23,11 +21,15 @@ interface ExcelUploadModalProps {
 const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
   isOpen,
   onClose,
-  onUploadComplete
+  onUploadComplete,
 }) => {
   const [error, setError] = useState<string | null>(null);
-  const [processedItems, setProcessedItems] = useState<ProcessedInventoryItem[]>([]);
-  const [currentStep, setCurrentStep] = useState<'upload' | 'processing' | 'review' | 'complete'>('upload');
+  const [processedItems, setProcessedItems] = useState<
+    ProcessedInventoryItem[]
+  >([]);
+  const [currentStep, setCurrentStep] = useState<
+    'upload' | 'processing' | 'review' | 'complete'
+  >('upload');
   const [progress, setProgress] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const downloadLinkRef = useRef<HTMLAnchorElement>(null);
@@ -35,156 +37,180 @@ const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
   const [backendError, setBackendError] = useState<string | null>(null);
 
-  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileSelect = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    setError(null);
-    setCurrentStep('processing');
-    setProgress(0);
+      setError(null);
+      setCurrentStep('processing');
+      setProgress(0);
 
-    try {
-      // Check file type
-      const isCSV = file.name.endsWith('.csv');
-      const isXLSX = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
-      if (!isCSV && !isXLSX) {
-        throw new Error('Please select a valid Excel file (.xlsx, .xls) or CSV file (.csv)');
-      }
-
-      let rawRows: any[] = [];
-      if (isCSV) {
-        // Read file content as text and parse as CSV
-        const text = await file.text();
-        const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-        if (!parsed.data || parsed.data.length === 0) {
-          throw new Error('No inventory items found in the file');
+      try {
+        // Check file type
+        const isCSV = file.name.endsWith('.csv');
+        const isXLSX =
+          file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+        if (!isCSV && !isXLSX) {
+          throw new Error(
+            'Please select a valid Excel file (.xlsx, .xls) or CSV file (.csv)'
+          );
         }
-        rawRows = parsed.data as any[];
-      } else if (isXLSX) {
-        // Read file as ArrayBuffer and parse as ExcelJS workbook
-        const data = await file.arrayBuffer();
-        const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(data);
-        const worksheet = workbook.worksheets[0];
-        if (!worksheet) {
-          throw new Error('No worksheet found in the Excel file');
-        }
-        // Convert worksheet to array of objects using header row
-        const rows: any[] = [];
-        let headers: string[] = [];
-        worksheet.eachRow((row, rowNumber) => {
-          const values = row.values as any[];
-          // ExcelJS row.values is 1-based, values[0] is undefined
-          if (rowNumber === 1) {
-            headers = values.slice(1).map((h: any) => (h ? h.toString() : ''));
-          } else {
-            const obj: Record<string, any> = {};
-            headers.forEach((header, i) => {
-              obj[header] = values[i + 1] !== undefined ? values[i + 1] : '';
-            });
-            rows.push(obj);
+
+        let rawRows: any[] = [];
+        if (isCSV) {
+          // Read file content as text and parse as CSV
+          const text = await file.text();
+          const parsed = Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+          });
+          if (!parsed.data || parsed.data.length === 0) {
+            throw new Error('No inventory items found in the file');
           }
-        });
-        rawRows = rows;
-        if (!rawRows || rawRows.length === 0) {
-          throw new Error('No inventory items found in the Excel file');
-        }
-      }
-
-      // Normalize all header keys to lowercase and trim spaces for robust field extraction
-      const normalizeKeys = (row: any) => {
-        const normalized: Record<string, string> = {};
-        Object.keys(row).forEach(key => {
-          normalized[key.trim().toLowerCase()] = row[key];
-        });
-        return normalized;
-      };
-      // Map and validate rows
-      const mappedRows = rawRows
-        .map((row) => {
-          const norm = normalizeKeys(row);
-          // Accept common variants for item name
-          const itemName = norm['item name'] || norm['itemname'] || norm['name'] || '';
-          if (!itemName) return null; // Ignore rows without item name
-          const department = norm['department'] || '';
-          // Accept both 'quantity' and 'Quantity' (case-insensitive)
-          const quantityStr = norm['quantity'] || norm['Quantity'] || '';
-          const quantity = parseInt(quantityStr, 10);
-          const category = norm['category'] || '';
-          const location = norm['location'] || '';
-          const reorderPoint = parseInt(norm['reorder point'] || norm['reorderpoint'] || '', 10) || undefined;
-          const safetyStock = parseInt(norm['safety stock'] || norm['safetystock'] || '', 10) || undefined;
-          let status: 'success' | 'error' = 'success';
-          let error: string | undefined = undefined;
-          if (!department) {
-            status = 'error';
-            error = 'Missing required fields: Department';
-          } else if (!quantityStr || isNaN(quantity)) {
-            status = 'error';
-            error = 'Missing or invalid Quantity';
-          } else if (quantity <= 0) {
-            // Ignore items with quantity 0 or less (do not add to inventory or review)
-            return null;
+          rawRows = parsed.data as any[];
+        } else if (isXLSX) {
+          // Read file as ArrayBuffer and parse as ExcelJS workbook
+          const data = await file.arrayBuffer();
+          const workbook = new ExcelJS.Workbook();
+          await workbook.xlsx.load(data);
+          const worksheet = workbook.worksheets[0];
+          if (!worksheet) {
+            throw new Error('No worksheet found in the Excel file');
           }
-          return {
-            itemName,
-            department,
-            quantity: isNaN(quantity) ? 0 : quantity,
-            category,
-            location,
-            reorderPoint,
-            safetyStock,
-            status,
-            error,
-          };
-        })
-        // Only keep items with quantity > 0 or errors (nulls are filtered out)
-        .filter(row => row !== null) as ProcessedInventoryItem[];
-      // Debug: log all mapped rows to verify filtering
-      console.log('Mapped rows (should only include quantity > 0):', mappedRows);
-      if (mappedRows.length === 0) {
-        throw new Error('No valid inventory items found. Please check your file headers and data.');
-      }
-      // Separate valid and invalid rows
-      const validRows = mappedRows.filter(row => row.status === 'success');
-      const invalidRows = mappedRows.filter(row => row.status === 'error');
-      // Perform async SKU lookup for valid rows
-      let processed: ProcessedInventoryItem[] = [];
-      if (validRows.length > 0) {
-        const skuResults = await skuGeneratorService.processExcelInventory(validRows);
-        processed = skuResults.map((item, idx) => ({
-          ...item,
-          status: validRows[idx].status,
-          error: validRows[idx].error,
+          // Convert worksheet to array of objects using header row
+          const rows: any[] = [];
+          let headers: string[] = [];
+          worksheet.eachRow((row, rowNumber) => {
+            const values = row.values as any[];
+            // ExcelJS row.values is 1-based, values[0] is undefined
+            if (rowNumber === 1) {
+              headers = values
+                .slice(1)
+                .map((h: any) => (h ? h.toString() : ''));
+            } else {
+              const obj: Record<string, any> = {};
+              headers.forEach((header, i) => {
+                obj[header] = values[i + 1] !== undefined ? values[i + 1] : '';
+              });
+              rows.push(obj);
+            }
+          });
+          rawRows = rows;
+          if (!rawRows || rawRows.length === 0) {
+            throw new Error('No inventory items found in the Excel file');
+          }
+        }
+
+        // Normalize all header keys to lowercase and trim spaces for robust field extraction
+        const normalizeKeys = (row: any) => {
+          const normalized: Record<string, string> = {};
+          Object.keys(row).forEach(key => {
+            normalized[key.trim().toLowerCase()] = row[key];
+          });
+          return normalized;
+        };
+        // Map and validate rows
+        const mappedRows = rawRows
+          .map(row => {
+            const norm = normalizeKeys(row);
+            // Accept common variants for item name
+            const itemName =
+              norm['item name'] || norm['itemname'] || norm['name'] || '';
+            if (!itemName) return null; // Ignore rows without item name
+            const department = norm['department'] || '';
+            // Accept both 'quantity' and 'Quantity' (case-insensitive)
+            const quantityStr = norm['quantity'] || norm['Quantity'] || '';
+            const quantity = parseInt(quantityStr, 10);
+            const category = norm['category'] || '';
+            const location = norm['location'] || '';
+            const reorderPoint =
+              parseInt(
+                norm['reorder point'] || norm['reorderpoint'] || '',
+                10
+              ) || undefined;
+            const safetyStock =
+              parseInt(norm['safety stock'] || norm['safetystock'] || '', 10) ||
+              undefined;
+            let status: 'success' | 'error' = 'success';
+            let error: string | undefined = undefined;
+            if (!department) {
+              status = 'error';
+              error = 'Missing required fields: Department';
+            } else if (!quantityStr || isNaN(quantity)) {
+              status = 'error';
+              error = 'Missing or invalid Quantity';
+            } else if (quantity <= 0) {
+              // Ignore items with quantity 0 or less (do not add to inventory or review)
+              return null;
+            }
+            return {
+              itemName,
+              department,
+              quantity: isNaN(quantity) ? 0 : quantity,
+              category,
+              location,
+              reorderPoint,
+              safetyStock,
+              status,
+              error,
+            };
+          })
+          // Only keep items with quantity > 0 or errors (nulls are filtered out)
+          .filter(row => row !== null) as ProcessedInventoryItem[];
+        // Debug: log all mapped rows to verify filtering
+        console.log(
+          'Mapped rows (should only include quantity > 0):',
+          mappedRows
+        );
+        if (mappedRows.length === 0) {
+          throw new Error(
+            'No valid inventory items found. Please check your file headers and data.'
+          );
+        }
+        // Separate valid and invalid rows
+        const validRows = mappedRows.filter(row => row.status === 'success');
+        const invalidRows = mappedRows.filter(row => row.status === 'error');
+        // Perform async SKU lookup for valid rows
+        let processed: ProcessedInventoryItem[] = [];
+        if (validRows.length > 0) {
+          const skuResults =
+            await skuGeneratorService.processExcelInventory(validRows);
+          processed = skuResults.map((item, idx) => ({
+            ...item,
+            status: validRows[idx].status,
+            error: validRows[idx].error,
+          }));
+        }
+        // Add invalid rows (with no SKU)
+        // When mapping invalid rows, ensure all required fields are present
+        const processedInvalid = invalidRows.map(row => ({
+          itemName: row.itemName || '',
+          department: row.department || '',
+          quantity: typeof row.quantity === 'number' ? row.quantity : 0,
+          category: row.category || '',
+          location: row.location || '',
+          reorderPoint: row.reorderPoint,
+          safetyStock: row.safetyStock,
+          sku: 'not found',
+          skuSource: 'none',
+          status: 'error' as const,
+          error: row.error,
         }));
+        setProcessedItems([...processed, ...processedInvalid]);
+        setCurrentStep('review');
+        setProgress(0);
+        setSuccess('Inventory uploaded successfully!');
+        setBackendError(null);
+      } catch (err) {
+        setBackendError(err instanceof Error ? err.message : 'Upload failed.');
+        setSuccess(null);
+        setCurrentStep('upload');
+        setProgress(0);
       }
-      // Add invalid rows (with no SKU)
-      // When mapping invalid rows, ensure all required fields are present
-      const processedInvalid = invalidRows.map(row => ({
-        itemName: row.itemName || '',
-        department: row.department || '',
-        quantity: typeof row.quantity === 'number' ? row.quantity : 0,
-        category: row.category || '',
-        location: row.location || '',
-        reorderPoint: row.reorderPoint,
-        safetyStock: row.safetyStock,
-        sku: 'not found',
-        skuSource: 'none',
-        status: 'error' as const,
-        error: row.error,
-      }));
-      setProcessedItems([...processed, ...processedInvalid]);
-      setCurrentStep('review');
-      setProgress(0);
-      setSuccess('Inventory uploaded successfully!');
-      setBackendError(null);
-    } catch (err) {
-      setBackendError(err instanceof Error ? err.message : 'Upload failed.');
-      setSuccess(null);
-      setCurrentStep('upload');
-      setProgress(0);
-    }
-  }, []);
+    },
+    []
+  );
 
   const handleConfirmUpload = () => {
     // Upload all items, not just those with status 'success'
@@ -233,8 +259,22 @@ const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
     const csv = [
       'Item Name,Department,Quantity,Category,Location,Reorder Point,Safety Stock,SKU,SKU Source,Status,Error',
       ...errorRows.map(row =>
-        [row.itemName, row.department, row.quantity, row.category, row.location, row.reorderPoint, row.safetyStock, row.sku, row.skuSource, row.status, row.error].map(v => `"${v ?? ''}"`).join(',')
-      )
+        [
+          row.itemName,
+          row.department,
+          row.quantity,
+          row.category,
+          row.location,
+          row.reorderPoint,
+          row.safetyStock,
+          row.sku,
+          row.skuSource,
+          row.status,
+          row.error,
+        ]
+          .map(v => `"${v ?? ''}"`)
+          .join(',')
+      ),
     ].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -291,19 +331,43 @@ const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
         </div>
 
         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-          <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Required Format:</h4>
+          <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+            Required Format:
+          </h4>
           <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-            <li>• <strong>Item Name:</strong> Product name (e.g., "Network Cable Cat6")</li>
-            <li>• <strong>Department:</strong> One of: Digicel+, Digicel Business, Commercial, Marketing, Outside Plant (OSP), Field Force &amp; HVAC</li>
-            <li>• <strong>Quantity:</strong> Number of items (must be &gt; 0)</li>
-            <li>• <strong>Category:</strong> Product category (e.g., "Cables", "Networking", "Computers")</li>
-            <li>• <strong>Location:</strong> Storage location (e.g., "Warehouse A", "Warehouse B")</li>
-            <li>• <strong>Reorder Point:</strong> Minimum stock level before reordering</li>
-            <li>• <strong>Safety Stock:</strong> Extra stock for emergencies</li>
-            <li>• <strong>Unit Cost:</strong> Cost per unit (e.g., 2.50)</li>
+            <li>
+              • <strong>Item Name:</strong> Product name (e.g., "Network Cable
+              Cat6")
+            </li>
+            <li>
+              • <strong>Department:</strong> One of: Digicel+, Digicel Business,
+              Commercial, Marketing, Outside Plant (OSP), Field Force &amp; HVAC
+            </li>
+            <li>
+              • <strong>Quantity:</strong> Number of items (must be &gt; 0)
+            </li>
+            <li>
+              • <strong>Category:</strong> Product category (e.g., "Cables",
+              "Networking", "Computers")
+            </li>
+            <li>
+              • <strong>Location:</strong> Storage location (e.g., "Warehouse
+              A", "Warehouse B")
+            </li>
+            <li>
+              • <strong>Reorder Point:</strong> Minimum stock level before
+              reordering
+            </li>
+            <li>
+              • <strong>Safety Stock:</strong> Extra stock for emergencies
+            </li>
+            <li>
+              • <strong>Unit Cost:</strong> Cost per unit (e.g., 2.50)
+            </li>
           </ul>
           <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-            Note: Only Item Name, Department, and Quantity are required. Other fields are optional.
+            Note: Only Item Name, Department, and Quantity are required. Other
+            fields are optional.
           </p>
         </div>
       </div>
@@ -326,7 +390,9 @@ const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="mt-1 text-xs text-secondary-700 dark:text-secondary-300">{progress}% complete</div>
+        <div className="mt-1 text-xs text-secondary-700 dark:text-secondary-300">
+          {progress}% complete
+        </div>
       </div>
     </div>
   );
@@ -361,23 +427,48 @@ const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
             </thead>
             <tbody>
               {processedItems.map((item, index) => (
-                <tr key={index} className={item.status === 'error' ? 'bg-red-100 dark:bg-red-900/20' : item.status === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900/20' : 'bg-green-50 dark:bg-green-900/20'}>
+                <tr
+                  key={index}
+                  className={
+                    item.status === 'error'
+                      ? 'bg-red-100 dark:bg-red-900/20'
+                      : item.status === 'warning'
+                        ? 'bg-yellow-100 dark:bg-yellow-900/20'
+                        : 'bg-green-50 dark:bg-green-900/20'
+                  }
+                >
                   <td className="px-2 py-1 border">{item.itemName}</td>
                   <td className="px-2 py-1 border">{item.department}</td>
                   <td className="px-2 py-1 border">{item.quantity}</td>
                   <td className="px-2 py-1 border">{item.category}</td>
                   <td className="px-2 py-1 border">{item.location}</td>
-                  <td className="px-2 py-1 border">{item.reorderPoint ?? ''}</td>
+                  <td className="px-2 py-1 border">
+                    {item.reorderPoint ?? ''}
+                  </td>
                   <td className="px-2 py-1 border">{item.safetyStock ?? ''}</td>
                   <td className="px-2 py-1 border">{item.sku}</td>
                   <td className="px-2 py-1 border">{item.skuSource}</td>
                   <td className="px-2 py-1 border font-bold">
-                    {item.status === 'success' && <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Success</span>}
-                    {item.status === 'warning' && <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">Warning</span>}
-                    {item.status === 'error' && <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">Error</span>}
+                    {item.status === 'success' && (
+                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
+                        Success
+                      </span>
+                    )}
+                    {item.status === 'warning' && (
+                      <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
+                        Warning
+                      </span>
+                    )}
+                    {item.status === 'error' && (
+                      <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">
+                        Error
+                      </span>
+                    )}
                   </td>
                   <td className="px-2 py-1 border text-red-600 dark:text-red-400">
-                    {item.error && <span className="text-red-600">{item.error}</span>}
+                    {item.error && (
+                      <span className="text-red-600">{item.error}</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -418,7 +509,8 @@ const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
         Upload Complete!
       </h3>
       <p className="text-sm text-secondary-500 dark:text-secondary-400">
-        {processedItems.filter(item => item.status === 'success').length} items have been added to inventory.
+        {processedItems.filter(item => item.status === 'success').length} items
+        have been added to inventory.
       </p>
       <button
         onClick={handleClose}
@@ -445,7 +537,12 @@ const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Upload Inventory from Excel" size="full">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Upload Inventory from Excel"
+      size="full"
+    >
       <div className="p-6">
         {error && <ErrorMessage message={error} />}
         {backendError && (
@@ -464,4 +561,4 @@ const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
   );
 };
 
-export default ExcelUploadModal; 
+export default ExcelUploadModal;

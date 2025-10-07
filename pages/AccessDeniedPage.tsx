@@ -1,8 +1,8 @@
-
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import PageContainer from '@/components/PageContainer';
 import { WarningIcon } from '@/constants';
-import { useNavigate } from 'react-router-dom';
 
 const AccessDeniedPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,7 +11,9 @@ const AccessDeniedPage: React.FC = () => {
     <PageContainer title="Access Denied">
       <div className="text-center py-10">
         <WarningIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-secondary-800 dark:text-secondary-200">Permission Required</h2>
+        <h2 className="text-2xl font-bold text-secondary-800 dark:text-secondary-200">
+          Permission Required
+        </h2>
         <p className="mt-2 text-base text-secondary-600 dark:text-secondary-400">
           You do not have the required permissions to access this page.
         </p>

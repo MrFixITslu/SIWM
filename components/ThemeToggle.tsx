@@ -1,6 +1,5 @@
-
-
 import React from 'react';
+
 import { SunIconSolid, MoonIconSolid } from '@/constants'; // Ensure these are correctly imported
 
 interface ThemeToggleProps {
@@ -8,7 +7,10 @@ interface ThemeToggleProps {
   toggleDarkMode: () => void;
 }
 
-const ThemeToggle: React.FC<ThemeToggleProps> = ({ isDarkMode, toggleDarkMode }) => {
+const ThemeToggle: React.FC<ThemeToggleProps> = ({
+  isDarkMode,
+  toggleDarkMode,
+}) => {
   return (
     <button
       onClick={toggleDarkMode}

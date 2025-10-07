@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     this.setState({
       error,
       errorInfo,
@@ -106,15 +106,16 @@ export class ErrorBoundary extends Component<Props, State> {
                 />
               </svg>
             </div>
-            
+
             <div className="mt-4 text-center">
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                 Something went wrong
               </h3>
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                We encountered an unexpected error. Please try again or contact support if the problem persists.
+                We encountered an unexpected error. Please try again or contact
+                support if the problem persists.
               </p>
-              
+
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="mt-4 text-left">
                   <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -127,19 +128,23 @@ export class ErrorBoundary extends Component<Props, State> {
                     {this.state.error.stack && (
                       <div className="mb-2">
                         <strong>Stack:</strong>
-                        <pre className="whitespace-pre-wrap">{this.state.error.stack}</pre>
+                        <pre className="whitespace-pre-wrap">
+                          {this.state.error.stack}
+                        </pre>
                       </div>
                     )}
                     {this.state.errorInfo && (
                       <div>
                         <strong>Component Stack:</strong>
-                        <pre className="whitespace-pre-wrap">{this.state.errorInfo.componentStack}</pre>
+                        <pre className="whitespace-pre-wrap">
+                          {this.state.errorInfo.componentStack}
+                        </pre>
                       </div>
                     )}
                   </div>
                 </details>
               )}
-              
+
               <div className="mt-6 flex space-x-3">
                 <button
                   onClick={this.handleRetry}
@@ -176,7 +181,7 @@ export const withErrorBoundary = <P extends object>(
   );
 
   WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
-  
+
   return WrappedComponent;
 };
 
@@ -194,4 +199,4 @@ export const useErrorHandler = () => {
   }, []);
 
   return { error, handleError, clearError };
-}; 
+};

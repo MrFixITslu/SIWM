@@ -1,4 +1,3 @@
-
 import { useLayoutEffect } from 'react';
 
 export default function useModalScrollLock(isOpen: boolean) {
@@ -7,7 +6,8 @@ export default function useModalScrollLock(isOpen: boolean) {
       // Get original body overflow
       const originalStyle = window.getComputedStyle(document.body).overflow;
       // Get scrollbar width
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
 
       // Apply styles to body
       document.body.style.overflow = 'hidden';

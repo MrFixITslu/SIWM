@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+
 import { ChevronDownIcon } from '@/constants';
 
 interface AutocompleteInputProps {
@@ -20,7 +21,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   label,
   required = false,
   className = '',
-  disabled = false
+  disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [filteredOptions, setFilteredOptions] = useState<string[]>([]);
@@ -71,12 +72,12 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   const handleInputKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setHighlightedIndex(prev => 
+      setHighlightedIndex(prev =>
         prev < filteredOptions.length - 1 ? prev + 1 : prev
       );
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+      setHighlightedIndex(prev => (prev > 0 ? prev - 1 : -1));
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
@@ -129,7 +130,9 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
           className="absolute right-0 top-0 h-full px-3 flex items-center text-secondary-400 hover:text-secondary-600 disabled:opacity-50"
           title="Toggle dropdown"
         >
-          <ChevronDownIcon className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon
+            className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          />
         </button>
       </div>
       {isOpen && filteredOptions.length > 0 && (

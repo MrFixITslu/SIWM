@@ -1,7 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
-import { ColumnDefinition } from '@/types';
+
 import { ChevronUpIcon, ChevronDownIcon } from '@/constants';
+import { ColumnDefinition } from '@/types';
 
 interface TableProps<T> {
   columns: ColumnDefinition<T, keyof T>[];
@@ -16,10 +16,17 @@ type SortConfig<T> = {
   direction: 'ascending' | 'descending';
 };
 
-const TableInner = <T extends { id: string | number }>(
-  { columns, data, onRowClick, actions, rowClassName }: TableProps<T>
-): React.ReactElement => {
-  const [sortConfig, setSortConfig] = useState<SortConfig<T>>({ key: null, direction: 'ascending' });
+const TableInner = <T extends { id: string | number }>({
+  columns,
+  data,
+  onRowClick,
+  actions,
+  rowClassName,
+}: TableProps<T>): React.ReactElement => {
+  const [sortConfig, setSortConfig] = useState<SortConfig<T>>({
+    key: null,
+    direction: 'ascending',
+  });
 
   const sortedData = useMemo(() => {
     // Ensure data is an array before attempting to sort.
@@ -57,7 +64,9 @@ const TableInner = <T extends { id: string | number }>(
 
   const getSortIcon = (columnKey: keyof T) => {
     if (sortConfig.key !== columnKey) {
-      return <ChevronDownIcon className="h-4 w-4 text-secondary-400 dark:text-secondary-500 opacity-50 group-hover:opacity-100" />;
+      return (
+        <ChevronDownIcon className="h-4 w-4 text-secondary-400 dark:text-secondary-500 opacity-50 group-hover:opacity-100" />
+      );
     }
     return sortConfig.direction === 'ascending' ? (
       <ChevronUpIcon className="h-4 w-4 text-primary-500 dark:text-primary-400" />
@@ -71,7 +80,7 @@ const TableInner = <T extends { id: string | number }>(
       <table className="min-w-full divide-y divide-secondary-200 dark:divide-secondary-700">
         <thead className="bg-secondary-50 dark:bg-secondary-700">
           <tr>
-            {columns.map((column) => (
+            {columns.map(column => (
               <th
                 key={String(column.key)}
                 scope="col"
@@ -80,12 +89,17 @@ const TableInner = <T extends { id: string | number }>(
               >
                 <div className="flex items-center">
                   {column.header}
-                  {column.sortable && <span className="ml-1">{getSortIcon(column.key)}</span>}
+                  {column.sortable && (
+                    <span className="ml-1">{getSortIcon(column.key)}</span>
+                  )}
                 </div>
               </th>
             ))}
             {actions && (
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider">
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider"
+              >
                 Actions
               </th>
             )}
@@ -94,20 +108,28 @@ const TableInner = <T extends { id: string | number }>(
         <tbody className="bg-white dark:bg-secondary-800 divide-y divide-secondary-200 dark:divide-secondary-700">
           {sortedData.length === 0 ? (
             <tr>
-              <td colSpan={columns.length + (actions ? 1 : 0)} className="px-6 py-8 text-center text-secondary-500 dark:text-secondary-400">
+              <td
+                colSpan={columns.length + (actions ? 1 : 0)}
+                className="px-6 py-8 text-center text-secondary-500 dark:text-secondary-400"
+              >
                 No data available.
               </td>
             </tr>
           ) : (
-            sortedData.map((item) => (
-              <tr 
+            sortedData.map(item => (
+              <tr
                 key={item.id}
                 className={`transition-colors duration-150 ${onRowClick ? 'cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-700/50' : 'hover:bg-secondary-50 dark:hover:bg-secondary-700/50'} ${rowClassName ? rowClassName(item) : ''}`}
                 onClick={() => onRowClick?.(item)}
               >
-                {columns.map((column) => (
-                  <td key={`${item.id}-${String(column.key)}`} className="px-6 py-4 whitespace-nowrap text-sm text-secondary-700 dark:text-secondary-300">
-                    {column.render ? column.render(item) : String(item[column.key] ?? '')}
+                {columns.map(column => (
+                  <td
+                    key={`${item.id}-${String(column.key)}`}
+                    className="px-6 py-4 whitespace-nowrap text-sm text-secondary-700 dark:text-secondary-300"
+                  >
+                    {column.render
+                      ? column.render(item)
+                      : String(item[column.key] ?? '')}
                   </td>
                 ))}
                 {actions && (

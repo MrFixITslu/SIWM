@@ -1,17 +1,11 @@
-
-
-
-
-
-
 export interface ASNItem {
-    id: number;
-    asnId: number;
-    inventoryItemId: number;
-    quantity: number;
-    newSerials?: string[];
-    itemName?: string;
-    itemSku?: string;
+  id: number;
+  asnId: number;
+  inventoryItemId: number;
+  quantity: number;
+  newSerials?: string[];
+  itemName?: string;
+  itemSku?: string;
 }
 
 export interface ASN {
@@ -36,7 +30,12 @@ export interface ASN {
   brokerName?: string;
   fees?: ShipmentFees;
   feeStatus?: FeeStatus;
-  feeStatusHistory?: Array<{ status: string; timestamp: string; userId?: number; fromStatus?: string }>;
+  feeStatusHistory?: Array<{
+    status: string;
+    timestamp: string;
+    userId?: number;
+    fromStatus?: string;
+  }>;
   paymentConfirmationName?: string;
   paymentConfirmationData?: string;
   createdAt?: string;
@@ -53,7 +52,7 @@ export interface InventoryItem {
   reorderPoint: number;
   supplierId?: number;
   lastStocktakeDate?: string;
-  imageUrl?: string; 
+  imageUrl?: string;
   isSerialized?: boolean; // New: Indicates if the item is tracked by individual serial numbers
   serialNumbers?: string[]; // New: Array of unique serial numbers for this item
   costPrice?: number; // For stock valuation
@@ -70,7 +69,7 @@ export enum OrderStatus {
   ReadyForPickup = 'Ready for Pick-up',
   PickedUp = 'Picked Up', // Indicates it has left warehouse control for dispatch
   Completed = 'Completed', // Indicates items have been received by end destination/requester
-  Cancelled = 'Cancelled'
+  Cancelled = 'Cancelled',
 }
 
 export interface OrderItem {
@@ -89,24 +88,27 @@ export interface WarehouseOrder {
   createdAt: string;
   picker?: string; // This is the technician's name
   technicianId?: number; // The ID of the technician user
-  statusHistory?: Array<{ status: string; timestamp: string; userId?: number; userName?: string; }>; // Log of status changes
+  statusHistory?: Array<{
+    status: string;
+    timestamp: string;
+    userId?: number;
+    userName?: string;
+  }>; // Log of status changes
 }
 
-
 export enum FeeStatus {
-    PendingSubmission = 'Pending Submission',
-    PendingApproval = 'Pending Approval',
-    Approved = 'Approved',
-    Rejected = 'Rejected',
-    PaymentConfirmed = 'Payment Confirmed',
+  PendingSubmission = 'Pending Submission',
+  PendingApproval = 'Pending Approval',
+  Approved = 'Approved',
+  Rejected = 'Rejected',
+  PaymentConfirmed = 'Payment Confirmed',
 }
 
 export interface ShipmentFees {
-    duties?: number;
-    shipping?: number;
-    storage?: number;
+  duties?: number;
+  shipping?: number;
+  storage?: number;
 }
-
 
 export interface OutboundShipment {
   id: number;
@@ -117,15 +119,20 @@ export interface OutboundShipment {
   status: 'Preparing' | 'In Transit' | 'Delivered' | 'Delayed' | 'Returned';
   dispatchDate: string;
   estimatedDeliveryDate: string;
-  shippedSerialNumbers?: Record<number, string[]>; 
+  shippedSerialNumbers?: Record<number, string[]>;
   actualDeliveryDate?: string; // For SLA compliance
-  
+
   // New fields for Broker/Finance workflow
   brokerId?: number;
   brokerName?: string;
   fees?: ShipmentFees;
   feeStatus?: FeeStatus;
-  feeStatusHistory?: Array<{ status: string; timestamp: string; userId?: number; fromStatus?: string }>;
+  feeStatusHistory?: Array<{
+    status: string;
+    timestamp: string;
+    userId?: number;
+    fromStatus?: string;
+  }>;
   paymentConfirmationName?: string;
   paymentConfirmationData?: string; // e.g., transaction ID or receipt data
   createdAt?: string;
@@ -141,11 +148,11 @@ export interface Vendor {
   lastCommunicationDate: string;
   products: string[]; // List of product categories they supply
   averageLeadTime?: number; // in days
-  totalSpend?: number; 
+  totalSpend?: number;
 }
 
 export interface ChatMessage {
-  id:string;
+  id: string;
   text: string;
   sender: 'user' | 'ai';
   timestamp: number;
@@ -172,11 +179,10 @@ export interface DashboardMetric {
 }
 
 export interface WorkflowMetric {
-    title: string;
-    value: string;
-    icon: React.ElementType;
+  title: string;
+  value: string;
+  icon: React.ElementType;
 }
-
 
 // For table component
 export interface ColumnDefinition<T, K extends keyof T> {
@@ -189,14 +195,19 @@ export interface ColumnDefinition<T, K extends keyof T> {
 // Reporting & Alerting Module Types
 
 export enum ReportCategory {
-  Inventory = "Inventory Reports",
-  ProcurementVendor = "Procurement & Vendor Reports",
-  InboundOutbound = "Inbound & Outbound Reports",
-  WarehouseOps = "Warehouse Operations Reports",
-  AIPredictive = "AI & Predictive Reports",
+  Inventory = 'Inventory Reports',
+  ProcurementVendor = 'Procurement & Vendor Reports',
+  InboundOutbound = 'Inbound & Outbound Reports',
+  WarehouseOps = 'Warehouse Operations Reports',
+  AIPredictive = 'AI & Predictive Reports',
 }
 
-export type ReportFilterType = 'date-range' | 'select' | 'multi-select' | 'text' | 'number-range';
+export type ReportFilterType =
+  | 'date-range'
+  | 'select'
+  | 'multi-select'
+  | 'text'
+  | 'number-range';
 
 export interface ReportFilterOption {
   value: string | number;
@@ -206,7 +217,7 @@ export interface ReportFilter {
   id: string;
   label: string;
   type: ReportFilterType;
-  options?: ReportFilterOption[]; 
+  options?: ReportFilterOption[];
   defaultValue?: any;
 }
 
@@ -226,7 +237,7 @@ export enum AlertSeverity {
   Info = 'Info',
   Warning = 'Warning',
   Error = 'Error',
-  Critical = 'Critical'
+  Critical = 'Critical',
 }
 
 export interface AlertLogEntry {
@@ -259,77 +270,76 @@ export interface ScheduledReportSubscription {
   enabled: boolean;
 }
 
-
 // Sample data types for specific reports (illustrative)
 export interface StockLevelReportItem extends InventoryItem {
-    // Inherits from InventoryItem, can add more specific fields if needed
+  // Inherits from InventoryItem, can add more specific fields if needed
 }
 
 export interface SerializedInventoryReportItem {
-    itemId: number;
-    itemName: string;
-    sku: string;
-    serialNumber: string;
-    location: string;
-    status: 'In Stock' | 'Allocated' | 'Shipped' | 'Returned'; // Example statuses
-    entryDate?: string;
+  itemId: number;
+  itemName: string;
+  sku: string;
+  serialNumber: string;
+  location: string;
+  status: 'In Stock' | 'Allocated' | 'Shipped' | 'Returned'; // Example statuses
+  entryDate?: string;
 }
 
 export interface VendorPerformanceReportItem extends Vendor {
-    onTimeDeliveryRate: number; // percentage
-    qualityRating: number; // e.g., 1-5 stars or percentage
+  onTimeDeliveryRate: number; // percentage
+  qualityRating: number; // e.g., 1-5 stars or percentage
 }
 
 export interface StockOutRiskForecastItem {
-    itemId: number;
-    itemName: string;
-    sku: string;
-    currentStock: number;
-    predictedStockOutDays: number;
-    confidence: number;
-    recommendedReorderQty: number;
+  itemId: number;
+  itemName: string;
+  sku: string;
+  currentStock: number;
+  predictedStockOutDays: number;
+  confidence: number;
+  recommendedReorderQty: number;
 }
 
 // New types for enhanced dashboard functionality
 export interface ItemBelowReorderPoint {
-    itemId: number;
-    itemName: string;
-    sku: string;
-    currentQuantity: number;
-    reorderPoint: number;
-    shortfall: number;
-    category: string;
-    location: string;
+  itemId: number;
+  itemName: string;
+  sku: string;
+  currentQuantity: number;
+  reorderPoint: number;
+  shortfall: number;
+  category: string;
+  location: string;
 }
 
 export interface ItemAtRiskOfStockOut {
-    itemId: number;
-    itemName: string;
-    sku: string;
-    currentQuantity: number;
-    sixMonthDemand: number;
-    demandRange: {
-        min: number;
-        max: number;
-    };
-    projectedStockOutDate: string; // Week number or date
-    leadTime: number; // in days
-    category: string;
-    location: string;
-    variability: number; // percentage
+  itemId: number;
+  itemName: string;
+  sku: string;
+  currentQuantity: number;
+  sixMonthDemand: number;
+  demandRange: {
+    min: number;
+    max: number;
+  };
+  projectedStockOutDate: string; // Week number or date
+  leadTime: number; // in days
+  category: string;
+  location: string;
+  variability: number; // percentage
 }
 
 export interface RunRateData {
-    weeklyInstalls: number;
-    lastUpdated: string;
-    source: 'dispatch' | 'manual' | 'default';
+  weeklyInstalls: number;
+  lastUpdated: string;
+  source: 'dispatch' | 'manual' | 'default';
 }
 
 export interface DashboardStockAnalysis {
-    itemsBelowReorderPoint: ItemBelowReorderPoint[];
-    itemsAtRiskOfStockOut: ItemAtRiskOfStockOut[];
-    runRate: RunRateData;
-    lastCalculated: string;
+  itemsBelowReorderPoint: ItemBelowReorderPoint[];
+  itemsAtRiskOfStockOut: ItemAtRiskOfStockOut[];
+  runRate: RunRateData;
+  lastCalculated: string;
 }
 
 // Asset Management Module Types
@@ -356,11 +366,11 @@ export interface WarehouseAsset {
   name: string;
   assetType: WarehouseAssetType;
   serialNumber?: string;
-  location: string; 
+  location: string;
   status: AssetStatus;
-  purchaseDate: string; 
+  purchaseDate: string;
   purchaseCost?: number;
-  lastMaintenanceDate?: string; 
+  lastMaintenanceDate?: string;
   nextScheduledMaintenance?: string;
   notes?: string;
   imageUrl?: string;
@@ -375,18 +385,26 @@ export enum MaintenanceType {
 
 export interface MaintenanceRecord {
   id: number;
-  assetId: number; 
-  assetName?: string; 
-  date: string; 
+  assetId: number;
+  assetName?: string;
+  date: string;
   type: MaintenanceType;
   description: string;
-  performedBy?: string; 
+  performedBy?: string;
   cost?: number;
-  downtimeHours?: number; 
+  downtimeHours?: number;
 }
 
 // Authentication Types
-export type UserRole = 'admin' | 'manager' | 'Warehouse' | 'Finance' | 'Broker' | 'Requester' | 'Technician' | 'Contractor';
+export type UserRole =
+  | 'admin'
+  | 'manager'
+  | 'Warehouse'
+  | 'Finance'
+  | 'Broker'
+  | 'Requester'
+  | 'Technician'
+  | 'Contractor';
 
 export interface User {
   id: number; // Unified ID for frontend use
@@ -413,7 +431,12 @@ export interface AuthContextType {
   token: string | null;
   isLoadingAuth: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, role?: User['role']) => Promise<void>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    role?: User['role']
+  ) => Promise<void>;
   logout: () => void;
 }
 
@@ -429,7 +452,7 @@ export interface AuditLogEntry {
 
 // For receiving workflow
 export interface ReceivedItem {
-    itemId: number;
-    receivedQuantity: number;
-    receivedSerials?: string[];
+  itemId: number;
+  receivedQuantity: number;
+  receivedSerials?: string[];
 }

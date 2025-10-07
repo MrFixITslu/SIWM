@@ -1,9 +1,14 @@
 import React, { Suspense, useState, useEffect } from 'react';
+
 import LoadingSpinner from './icons/LoadingSpinner';
 
 // Skeleton components for better UX
-export const SkeletonCard: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <div className={`bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg animate-pulse ${className}`}>
+export const SkeletonCard: React.FC<{ className?: string }> = ({
+  className = '',
+}) => (
+  <div
+    className={`bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg animate-pulse ${className}`}
+  >
     <div className="flex items-center justify-between mb-4">
       <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
       <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
@@ -26,9 +31,9 @@ export const SkeletonChart: React.FC = () => (
   </div>
 );
 
-export const SkeletonTable: React.FC<{ rows?: number; columns?: number }> = ({ 
-  rows = 5, 
-  columns = 4 
+export const SkeletonTable: React.FC<{ rows?: number; columns?: number }> = ({
+  rows = 5,
+  columns = 4,
 }) => (
   <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden animate-pulse">
     <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -98,7 +103,7 @@ export const LoadingOverlay: React.FC<{
   <div className="relative">
     {children}
     {isLoading && (
-      <div 
+      <div
         className={`absolute inset-0 flex items-center justify-center z-50 ${
           blur ? 'backdrop-blur-sm' : ''
         }`}
@@ -114,10 +119,10 @@ export const LoadingOverlay: React.FC<{
 );
 
 // Infinite scroll loading indicator
-export const InfiniteScrollLoader: React.FC<{ hasMore: boolean; isLoading: boolean }> = ({ 
-  hasMore, 
-  isLoading 
-}) => {
+export const InfiniteScrollLoader: React.FC<{
+  hasMore: boolean;
+  isLoading: boolean;
+}> = ({ hasMore, isLoading }) => {
   if (!hasMore) {
     return (
       <div className="text-center py-4 text-gray-500 dark:text-gray-400">
@@ -130,7 +135,9 @@ export const InfiniteScrollLoader: React.FC<{ hasMore: boolean; isLoading: boole
     return (
       <div className="flex items-center justify-center py-4">
         <LoadingSpinner className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-2" />
-        <span className="text-sm text-gray-600 dark:text-gray-400">Loading more...</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Loading more...
+        </span>
       </div>
     );
   }
@@ -158,15 +165,26 @@ export const SuspenseWrapper: React.FC<{
     return (
       <div className="text-center py-8">
         <div className="text-red-600 dark:text-red-400 mb-2">
-          <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          <svg
+            className="w-12 h-12 mx-auto"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
           </svg>
         </div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
           Loading Timeout
         </h3>
         <p className="text-gray-500 dark:text-gray-400">
-          The content is taking longer than expected to load. Please try refreshing the page.
+          The content is taking longer than expected to load. Please try
+          refreshing the page.
         </p>
       </div>
     );
@@ -215,11 +233,7 @@ export const LazyLoad: React.FC<{
     }
   }, [isVisible]);
 
-  return (
-    <div ref={ref}>
-      {!hasLoaded ? fallback : children}
-    </div>
-  );
+  return <div ref={ref}>{!hasLoaded ? fallback : children}</div>;
 };
 
 // Loading states for different data types
@@ -240,7 +254,10 @@ export const DataLoadingState: React.FC<{
         return (
           <div className="space-y-4">
             {[...Array(count)].map((_, i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 p-4 rounded-lg animate-pulse">
+              <div
+                key={i}
+                className="bg-white dark:bg-gray-800 p-4 rounded-lg animate-pulse"
+              >
                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
                 <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
               </div>
@@ -252,9 +269,5 @@ export const DataLoadingState: React.FC<{
     }
   };
 
-  return (
-    <div className={className}>
-      {renderSkeleton()}
-    </div>
-  );
-}; 
+  return <div className={className}>{renderSkeleton()}</div>;
+};

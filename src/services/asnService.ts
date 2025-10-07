@@ -1,6 +1,7 @@
 // services/asnService.ts
-import { ASN, ShipmentFees, FeeStatus, ReceivedItem } from '@/types';
 import { api } from './apiHelper';
+
+import { ASN, ShipmentFees, FeeStatus, ReceivedItem } from '@/types';
 
 export const asnService = {
   getASNs: (): Promise<ASN[]> => {
@@ -11,11 +12,26 @@ export const asnService = {
     return api.get(`/asns/${id}`);
   },
 
-  createASN: (asnData: Omit<ASN, 'id' | 'status'> & { status?: ASN['status'], items?: any[], quoteFile?: File | null, poFile?: File | null, invoiceFile?: File | null, bolFile?: File | null }): Promise<ASN> => {
+  createASN: (
+    asnData: Omit<ASN, 'id' | 'status'> & {
+      status?: ASN['status'];
+      items?: any[];
+      quoteFile?: File | null;
+      poFile?: File | null;
+      invoiceFile?: File | null;
+      bolFile?: File | null;
+    }
+  ): Promise<ASN> => {
     const formData = new FormData();
     // Append all fields except files
     Object.entries(asnData).forEach(([key, value]) => {
-      if (key === 'quoteFile' || key === 'poFile' || key === 'invoiceFile' || key === 'bolFile') return;
+      if (
+        key === 'quoteFile' ||
+        key === 'poFile' ||
+        key === 'invoiceFile' ||
+        key === 'bolFile'
+      )
+        return;
       if (value !== undefined && value !== null) {
         if (typeof value === 'object' && !Array.isArray(value)) {
           formData.append(key, JSON.stringify(value));
@@ -27,13 +43,55 @@ export const asnService = {
     // Append files if present
     if (asnData.quoteFile) formData.append('quoteFile', asnData.quoteFile);
     if (asnData.poFile) formData.append('poFile', asnData.poFile);
-    if (asnData.invoiceFile) formData.append('invoiceFile', asnData.invoiceFile);
+    if (asnData.invoiceFile)
+      formData.append('invoiceFile', asnData.invoiceFile);
     if (asnData.bolFile) formData.append('bolFile', asnData.bolFile);
     return api.postForm('/asns', formData);
   },
 
-  updateASN: (id: number, asnData: Partial<ASN>): Promise<ASN> => {
-    return api.put(`/asns/${id}`, asnData);
+  updateASN: (
+    id: number, 
+    asnData: Partial<ASN> & {
+      quoteFile?: File | null;
+      poFile?: File | null;
+      invoiceFile?: File | null;
+      bolFile?: File | null;
+    }
+  ): Promise<ASN> => {
+    // Check if any files are present
+    const hasFiles = asnData.quoteFile || asnData.poFile || asnData.invoiceFile || asnData.bolFile;
+    
+    if (hasFiles) {
+      // Use FormData for file uploads
+      const formData = new FormData();
+      // Append all fields except files
+      Object.entries(asnData).forEach(([key, value]) => {
+        if (
+          key === 'quoteFile' ||
+          key === 'poFile' ||
+          key === 'invoiceFile' ||
+          key === 'bolFile'
+        )
+          return;
+        if (value !== undefined && value !== null) {
+          if (typeof value === 'object' && !Array.isArray(value)) {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value as any);
+          }
+        }
+      });
+      // Append files if present
+      if (asnData.quoteFile) formData.append('quoteFile', asnData.quoteFile);
+      if (asnData.poFile) formData.append('poFile', asnData.poFile);
+      if (asnData.invoiceFile) formData.append('invoiceFile', asnData.invoiceFile);
+      if (asnData.bolFile) formData.append('bolFile', asnData.bolFile);
+      
+      return api.putForm(`/asns/${id}`, formData);
+    } else {
+      // Use regular JSON for non-file updates
+      return api.put(`/asns/${id}`, asnData);
+    }
   },
 
   deleteASN: (id: number): Promise<void> => {
@@ -44,7 +102,10 @@ export const asnService = {
     return api.post(`/asns/${id}/submit-fees`, { fees });
   },
 
-  approveFees: (id: number, feeStatus: FeeStatus.Approved | FeeStatus.Rejected): Promise<ASN> => {
+  approveFees: (
+    id: number,
+    feeStatus: FeeStatus.Approved | FeeStatus.Rejected
+  ): Promise<ASN> => {
     return api.post(`/asns/${id}/approve-fees`, { feeStatus });
   },
 
@@ -56,7 +117,10 @@ export const asnService = {
     return api.postForm(`/asns/${id}/confirm-payment`, formData);
   },
 
-  receiveShipment: (id: number, receivedItems: ReceivedItem[]): Promise<ASN> => {
+  receiveShipment: (
+    id: number,
+    receivedItems: ReceivedItem[]
+  ): Promise<ASN> => {
     return api.post(`/asns/${id}/receive`, { receivedItems });
   },
 

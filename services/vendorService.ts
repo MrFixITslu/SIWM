@@ -1,6 +1,7 @@
 // services/vendorService.ts
-import { Vendor } from '@/types';
 import { api } from './apiHelper';
+
+import { Vendor } from '@/types';
 
 export const vendorService = {
   getVendors: (): Promise<Vendor[]> => {

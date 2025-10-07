@@ -15,9 +15,13 @@ export const aiFeedbackFrontendService = {
       headers: getCommonHeaders(),
       body: JSON.stringify(feedbackData),
     });
-    if (!response.ok) { 
-      const err = await response.json().catch(() => ({message: response.statusText})); 
-      throw new Error(err.message || `Failed to submit AI feedback: ${response.statusText}`);
+    if (!response.ok) {
+      const err = await response
+        .json()
+        .catch(() => ({ message: response.statusText }));
+      throw new Error(
+        err.message || `Failed to submit AI feedback: ${response.statusText}`
+      );
     }
     return response.json();
   },

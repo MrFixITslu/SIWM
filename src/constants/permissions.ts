@@ -1,19 +1,18 @@
-
 export const ALL_PERMISSIONS = [
-    { id: 'dashboard', name: 'Dashboard' },
-    { id: 'incoming-shipments', name: 'Incoming Shipments' },
-    { id: 'inventory', name: 'Inventory' },
-    { id: 'orders', name: 'Warehouse Orders' },
-    { id: 'dispatch', name: 'Dispatch & Logistics' },
-    { id: 'warehouse-management', name: 'Warehouse Management' },
-    { id: 'vendors', name: 'Vendors' },
-    { id: 'assets', name: 'Asset Management' },
-    { id: 'master-data', name: 'Master Data' },
-    { id: 'reports', name: 'Reporting & Analytics' },
-    { id: 'notifications', name: 'Notifications' },
-    { id: 'compliance', name: 'Compliance' },
-    { id: 'user-management', name: 'User Management' },
-    { id: 'help', name: 'User Guide' },
+  { id: 'dashboard', name: 'Dashboard' },
+  { id: 'incoming-shipments', name: 'Incoming Shipments' },
+  { id: 'inventory', name: 'Inventory' },
+  { id: 'orders', name: 'Warehouse Orders' },
+  { id: 'dispatch', name: 'Dispatch & Logistics' },
+  { id: 'warehouse-management', name: 'Warehouse Management' },
+  { id: 'vendors', name: 'Vendors' },
+  { id: 'assets', name: 'Asset Management' },
+  { id: 'master-data', name: 'Master Data' },
+  { id: 'reports', name: 'Reporting & Analytics' },
+  { id: 'notifications', name: 'Notifications' },
+  { id: 'compliance', name: 'Compliance' },
+  { id: 'user-management', name: 'User Management' },
+  { id: 'help', name: 'User Guide' },
 ];
 
 export const USER_GROUPS = [

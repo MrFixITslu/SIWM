@@ -10,12 +10,16 @@ interface AccessibilityContextType {
   announceToScreenReader: (message: string) => void;
 }
 
-const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
+const AccessibilityContext = createContext<
+  AccessibilityContextType | undefined
+>(undefined);
 
 export const useAccessibility = () => {
   const context = useContext(AccessibilityContext);
   if (!context) {
-    throw new Error('useAccessibility must be used within an AccessibilityProvider');
+    throw new Error(
+      'useAccessibility must be used within an AccessibilityProvider'
+    );
   }
   return context;
 };
@@ -24,10 +28,14 @@ interface AccessibilityProviderProps {
   children: React.ReactNode;
 }
 
-export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ children }) => {
+export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({
+  children,
+}) => {
   const [isHighContrast, setIsHighContrast] = useState(false);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
-  const [fontSize, setFontSizeState] = useState<'small' | 'medium' | 'large'>('medium');
+  const [fontSize, setFontSizeState] = useState<'small' | 'medium' | 'large'>(
+    'medium'
+  );
 
   // Check user's system preferences
   useEffect(() => {
@@ -45,8 +53,10 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
   // Load user preferences from localStorage
   useEffect(() => {
     const savedHighContrast = localStorage.getItem('highContrast') === 'true';
-    const savedFontSize = localStorage.getItem('fontSize') as 'small' | 'medium' | 'large' || 'medium';
-    
+    const savedFontSize =
+      (localStorage.getItem('fontSize') as 'small' | 'medium' | 'large') ||
+      'medium';
+
     setIsHighContrast(savedHighContrast);
     setFontSizeState(savedFontSize);
   }, []);
@@ -54,7 +64,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
   // Apply accessibility settings to document
   useEffect(() => {
     const root = document.documentElement;
-    
+
     // Apply high contrast
     if (isHighContrast) {
       root.classList.add('high-contrast');
@@ -70,7 +80,11 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
     }
 
     // Apply font size
-    root.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
+    root.classList.remove(
+      'font-size-small',
+      'font-size-medium',
+      'font-size-large'
+    );
     root.classList.add(`font-size-${fontSize}`);
   }, [isHighContrast, isReducedMotion, fontSize]);
 
@@ -98,9 +112,9 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
     announcement.setAttribute('aria-atomic', 'true');
     announcement.className = 'sr-only';
     announcement.textContent = message;
-    
+
     document.body.appendChild(announcement);
-    
+
     // Remove the announcement after it's been read
     setTimeout(() => {
       document.body.removeChild(announcement);
@@ -114,7 +128,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
     toggleHighContrast,
     toggleReducedMotion,
     setFontSize,
-    announceToScreenReader
+    announceToScreenReader,
   };
 
   return (
@@ -132,11 +146,11 @@ export const AccessibilityToolbar: React.FC = () => {
     fontSize,
     toggleHighContrast,
     toggleReducedMotion,
-    setFontSize
+    setFontSize,
   } = useAccessibility();
 
   return (
-    <div 
+    <div
       className="fixed top-4 right-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4 z-50"
       role="toolbar"
       aria-label="Accessibility options"
@@ -144,11 +158,14 @@ export const AccessibilityToolbar: React.FC = () => {
       <h3 className="text-sm font-semibold mb-3 text-gray-900 dark:text-white">
         Accessibility Options
       </h3>
-      
+
       <div className="space-y-3">
         {/* High Contrast Toggle */}
         <div className="flex items-center justify-between">
-          <label htmlFor="high-contrast" className="text-sm text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="high-contrast"
+            className="text-sm text-gray-700 dark:text-gray-300"
+          >
             High Contrast
           </label>
           <button
@@ -171,7 +188,10 @@ export const AccessibilityToolbar: React.FC = () => {
 
         {/* Reduced Motion Toggle */}
         <div className="flex items-center justify-between">
-          <label htmlFor="reduced-motion" className="text-sm text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="reduced-motion"
+            className="text-sm text-gray-700 dark:text-gray-300"
+          >
             Reduced Motion
           </label>
           <button
@@ -198,7 +218,7 @@ export const AccessibilityToolbar: React.FC = () => {
             Font Size
           </label>
           <div className="flex space-x-2">
-            {(['small', 'medium', 'large'] as const).map((size) => (
+            {(['small', 'medium', 'large'] as const).map(size => (
               <button
                 key={size}
                 onClick={() => setFontSize(size)}
@@ -227,10 +247,15 @@ export const useFocusTrap = (isActive: boolean) => {
   useEffect(() => {
     if (!isActive) return;
 
-    const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    const firstFocusableElement = document.querySelector(focusableElements) as HTMLElement;
+    const focusableElements =
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const firstFocusableElement = document.querySelector(
+      focusableElements
+    ) as HTMLElement;
     const focusableContent = document.querySelectorAll(focusableElements);
-    const lastFocusableElement = focusableContent[focusableContent.length - 1] as HTMLElement;
+    const lastFocusableElement = focusableContent[
+      focusableContent.length - 1
+    ] as HTMLElement;
 
     const handleTabKey = (e: KeyboardEvent) => {
       if (e.key === 'Tab') {
@@ -265,4 +290,4 @@ export const SkipToMainContent: React.FC = () => (
   >
     Skip to main content
   </a>
-); 
+);

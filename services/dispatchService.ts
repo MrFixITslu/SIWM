@@ -1,5 +1,6 @@
-import { OutboundShipment, ShipmentFees, FeeStatus } from '@/types';
 import { api } from './apiHelper';
+
+import { OutboundShipment, ShipmentFees, FeeStatus } from '@/types';
 
 export const dispatchService = {
   getDispatches: (): Promise<OutboundShipment[]> => {
@@ -10,11 +11,20 @@ export const dispatchService = {
     return api.get(`/dispatch/${id}`);
   },
 
-  createDispatch: (dispatchData: Partial<Omit<OutboundShipment, 'id'>> & { shippedSerialNumbersString?: string }): Promise<OutboundShipment> => {
+  createDispatch: (
+    dispatchData: Partial<Omit<OutboundShipment, 'id'>> & {
+      shippedSerialNumbersString?: string;
+    }
+  ): Promise<OutboundShipment> => {
     return api.post('/dispatch', dispatchData);
   },
 
-  updateDispatch: (id: number, dispatchData: Partial<OutboundShipment> & { shippedSerialNumbersString?: string }): Promise<OutboundShipment> => {
+  updateDispatch: (
+    id: number,
+    dispatchData: Partial<OutboundShipment> & {
+      shippedSerialNumbersString?: string;
+    }
+  ): Promise<OutboundShipment> => {
     return api.put(`/dispatch/${id}`, dispatchData);
   },
 
@@ -26,15 +36,21 @@ export const dispatchService = {
     return api.post(`/dispatch/${id}/submit-fees`, { fees });
   },
 
-  approveFees: (id: number, feeStatus: FeeStatus.Approved | FeeStatus.Rejected): Promise<OutboundShipment> => {
+  approveFees: (
+    id: number,
+    feeStatus: FeeStatus.Approved | FeeStatus.Rejected
+  ): Promise<OutboundShipment> => {
     return api.post(`/dispatch/${id}/approve-fees`, { feeStatus });
   },
 
-  confirmPayment: (id: number, receiptFile: File | null): Promise<OutboundShipment> => {
+  confirmPayment: (
+    id: number,
+    receiptFile: File | null
+  ): Promise<OutboundShipment> => {
     const formData = new FormData();
     if (receiptFile) {
       formData.append('receipt', receiptFile);
     }
     return api.postForm(`/dispatch/${id}/confirm-payment`, formData);
-  }
+  },
 };

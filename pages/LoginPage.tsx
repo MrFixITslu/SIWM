@@ -1,12 +1,11 @@
-
-
 import React, { useState, FormEvent } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import PageContainer from '@/components/PageContainer';
+
 import { LoadingSpinner } from '@/components/icons/LoadingSpinner';
-import { APP_NAME, WarningIcon } from '@/constants'; 
 import LoginBackground from '@/components/LoginBackground';
+import PageContainer from '@/components/PageContainer';
+import { APP_NAME, WarningIcon } from '@/constants';
+import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types';
 
 const LoginPage: React.FC = () => {
@@ -17,11 +16,11 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState(''); // For registration
-  const [role, setRole] = useState<UserRole>('Requester'); 
+  const [role, setRole] = useState<UserRole>('Requester');
 
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoadingPage, setIsLoadingPage] = useState(false); 
+  const [isLoadingPage, setIsLoadingPage] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -42,28 +41,41 @@ const LoginPage: React.FC = () => {
 
   if (auth.isLoadingAuth && !auth.user) {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary-600 to-primary-400 dark:from-secondary-900 dark:to-secondary-800">
-             <LoadingSpinner className="w-12 h-12 text-white" />
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary-600 to-primary-400 dark:from-secondary-900 dark:to-secondary-800">
+        <LoadingSpinner className="w-12 h-12 text-white" />
+      </div>
     );
   }
 
   if (auth.user) {
     return <Navigate to={from} replace />;
   }
-  
-  const registrationRoles: UserRole[] = ['Requester', 'Broker', 'Finance', 'Warehouse', 'Technician', 'Contractor'];
+
+  const registrationRoles: UserRole[] = [
+    'Requester',
+    'Broker',
+    'Finance',
+    'Warehouse',
+    'Technician',
+    'Contractor',
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-50 dark:from-secondary-900 dark:via-secondary-800 dark:to-secondary-950 flex items-center justify-center p-4 relative overflow-hidden">
       <LoginBackground />
       <div className="w-full max-w-md relative z-10">
-        <PageContainer 
-          title={isRegistering ? `Register for ${APP_NAME}` : `Welcome to ${APP_NAME}`}
+        <PageContainer
+          title={
+            isRegistering
+              ? `Register for ${APP_NAME}`
+              : `Welcome to ${APP_NAME}`
+          }
           titleClassName="text-center w-full text-2xl sm:text-3xl"
         >
           <p className="text-center text-secondary-600 dark:text-secondary-400 mb-6 -mt-2">
-            {isRegistering ? 'Create your account to get started.' : 'Sign in to access your dashboard.'}
+            {isRegistering
+              ? 'Create your account to get started.'
+              : 'Sign in to access your dashboard.'}
           </p>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
@@ -75,7 +87,10 @@ const LoginPage: React.FC = () => {
 
             {isRegistering && (
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+                >
                   Full Name
                 </label>
                 <input
@@ -85,14 +100,17 @@ const LoginPage: React.FC = () => {
                   autoComplete="name"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={e => setName(e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
                 />
               </div>
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Email address
               </label>
               <input
@@ -102,43 +120,54 @@ const LoginPage: React.FC = () => {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Password
               </label>
               <input
                 id="password"
                 name="password"
                 type="password"
-                autoComplete={isRegistering ? "new-password" : "current-password"}
+                autoComplete={
+                  isRegistering ? 'new-password' : 'current-password'
+                }
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
               />
             </div>
-             {isRegistering && (
+            {isRegistering && (
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+                <label
+                  htmlFor="role"
+                  className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+                >
                   Select Your Group
                 </label>
                 <select
                   id="role"
                   name="role"
                   value={role}
-                  onChange={(e) => setRole(e.target.value as UserRole)}
+                  onChange={e => setRole(e.target.value as UserRole)}
                   className="mt-1 block w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
                 >
-                  {registrationRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                  {registrationRoles.map(r => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
-
 
             <div>
               <button
@@ -148,8 +177,10 @@ const LoginPage: React.FC = () => {
               >
                 {isLoadingPage ? (
                   <LoadingSpinner className="w-5 h-5" />
+                ) : isRegistering ? (
+                  'Register'
                 ) : (
-                  isRegistering ? 'Register' : 'Sign in'
+                  'Sign in'
                 )}
               </button>
             </div>
@@ -159,11 +190,13 @@ const LoginPage: React.FC = () => {
             <button
               onClick={() => {
                 setIsRegistering(!isRegistering);
-                setError(null); 
+                setError(null);
               }}
               className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
             >
-              {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Register"}
+              {isRegistering
+                ? 'Already have an account? Sign in'
+                : "Don't have an account? Register"}
             </button>
           </div>
         </PageContainer>

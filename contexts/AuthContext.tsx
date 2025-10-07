@@ -1,9 +1,14 @@
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+  ReactNode,
+} from 'react';
 
-
-
-import React, { createContext, useState, useEffect, useContext, useCallback, ReactNode } from 'react';
-import { authService } from '@/services/authService'; 
-import { User, AuthContextType, UserRole } from '@/types'; 
+import { authService } from '@/services/authService';
+import { User, AuthContextType, UserRole } from '@/types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -26,9 +31,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setToken(storedUser.token);
         }
       } catch (error) {
-        console.error("Error reading user from storage:", error);
+        console.error('Error reading user from storage:', error);
         // Clear potentially corrupted storage
-        authService.logout(); 
+        authService.logout();
       } finally {
         setIsLoadingAuth(false);
       }
@@ -44,24 +49,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(userData.token || null);
     } catch (error) {
       // Let the LoginPage handle displaying the error
-      throw error; 
-    } finally {
-      setIsLoadingAuth(false);
-    }
-  }, []);
-
-  const register = useCallback(async (name: string, email: string, password: string, role?: UserRole) => {
-    setIsLoadingAuth(true);
-    try {
-      const userData = await authService.register(name, email, password, role);
-      setUser(userData);
-      setToken(userData.token || null);
-    } catch (error) {
       throw error;
     } finally {
       setIsLoadingAuth(false);
     }
   }, []);
+
+  const register = useCallback(
+    async (name: string, email: string, password: string, role?: UserRole) => {
+      setIsLoadingAuth(true);
+      try {
+        const userData = await authService.register(
+          name,
+          email,
+          password,
+          role
+        );
+        setUser(userData);
+        setToken(userData.token || null);
+      } catch (error) {
+        throw error;
+      } finally {
+        setIsLoadingAuth(false);
+      }
+    },
+    []
+  );
 
   const logout = useCallback(() => {
     authService.logout();

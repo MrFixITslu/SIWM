@@ -90,7 +90,9 @@ const StatsCard: React.FC<StatsCardProps> = ({
         <div className="flex items-center justify-between mb-4">
           <h3 className={`text-sm font-medium ${classes.text}`}>{title}</h3>
           {Icon && (
-            <div className={`p-2 rounded-lg bg-white/50 dark:bg-black/20 ${classes.icon}`}>
+            <div
+              className={`p-2 rounded-lg bg-white/50 dark:bg-black/20 ${classes.icon}`}
+            >
               <Icon className="h-5 w-5" />
             </div>
           )}
@@ -111,10 +113,13 @@ const StatsCard: React.FC<StatsCardProps> = ({
           <div className="flex items-center">
             <span
               className={`text-sm font-medium ${
-                trend.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                trend.isPositive
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-red-600 dark:text-red-400'
               }`}
             >
-              {trend.isPositive ? '+' : ''}{trend.value}%
+              {trend.isPositive ? '+' : ''}
+              {trend.value}%
             </span>
             <span className="text-sm text-secondary-500 dark:text-secondary-400 ml-1">
               {trend.label}
@@ -133,4 +138,4 @@ const StatsCard: React.FC<StatsCardProps> = ({
   );
 };
 
-export default StatsCard; 
+export default StatsCard;

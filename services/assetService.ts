@@ -1,5 +1,6 @@
 // services/assetService.ts
 import { WarehouseAsset, MaintenanceRecord } from '../types';
+
 import { api } from './apiHelper';
 
 export const assetService = {
@@ -7,7 +8,9 @@ export const assetService = {
     return api.get('/assets');
   },
 
-  addAsset: (assetData: Omit<WarehouseAsset, 'id'>): Promise<WarehouseAsset> => {
+  addAsset: (
+    assetData: Omit<WarehouseAsset, 'id'>
+  ): Promise<WarehouseAsset> => {
     return api.post('/assets', assetData);
   },
 
@@ -20,19 +23,31 @@ export const assetService = {
   },
 
   // --- Maintenance Records ---
-  getMaintenanceRecordsForAsset: (assetId: number): Promise<MaintenanceRecord[]> => {
+  getMaintenanceRecordsForAsset: (
+    assetId: number
+  ): Promise<MaintenanceRecord[]> => {
     return api.get(`/assets/${assetId}/maintenance`);
   },
 
-  addMaintenanceRecord: (assetId: number, recordData: Omit<MaintenanceRecord, 'id' | 'assetName'>): Promise<MaintenanceRecord> => {
+  addMaintenanceRecord: (
+    assetId: number,
+    recordData: Omit<MaintenanceRecord, 'id' | 'assetName'>
+  ): Promise<MaintenanceRecord> => {
     return api.post(`/assets/${assetId}/maintenance`, recordData);
   },
 
-  updateMaintenanceRecord: (assetId: number, recordId: number, updatedRecord: Partial<MaintenanceRecord>): Promise<MaintenanceRecord> => {
+  updateMaintenanceRecord: (
+    assetId: number,
+    recordId: number,
+    updatedRecord: Partial<MaintenanceRecord>
+  ): Promise<MaintenanceRecord> => {
     return api.put(`/assets/${assetId}/maintenance/${recordId}`, updatedRecord);
   },
 
-  deleteMaintenanceRecord: (assetId: number, recordId: number): Promise<void> => {
+  deleteMaintenanceRecord: (
+    assetId: number,
+    recordId: number
+  ): Promise<void> => {
     return api.delete(`/assets/${assetId}/maintenance/${recordId}`);
   },
 };

@@ -1,15 +1,18 @@
-
 import React, { useState } from 'react';
+
 import DestructiveConfirmationModal from '@/components/DestructiveConfirmationModal';
-import { systemService } from '@/services/systemService';
 import { WarningIcon } from '@/constants';
+import { systemService } from '@/services/systemService';
 
 interface DangerZoneProps {
   onResetSuccess: (message: string) => void;
   onResetError: (error: string) => void;
 }
 
-const DangerZone: React.FC<DangerZoneProps> = ({ onResetSuccess, onResetError }) => {
+const DangerZone: React.FC<DangerZoneProps> = ({
+  onResetSuccess,
+  onResetError,
+}) => {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -38,7 +41,10 @@ const DangerZone: React.FC<DangerZoneProps> = ({ onResetSuccess, onResetError })
         </h3>
         <div className="mt-2 max-w-xl text-sm text-secondary-600 dark:text-secondary-400">
           <p>
-            This action will permanently delete all transactional data from the system, including shipments, inventory, orders, logs, and notifications. This is intended for demonstration purposes to reset the system to a clean state.
+            This action will permanently delete all transactional data from the
+            system, including shipments, inventory, orders, logs, and
+            notifications. This is intended for demonstration purposes to reset
+            the system to a clean state.
           </p>
         </div>
         <div className="mt-4">
@@ -61,7 +67,10 @@ const DangerZone: React.FC<DangerZoneProps> = ({ onResetSuccess, onResetError })
         message={
           <>
             <p>This is an irreversible action.</p>
-            <p>All shipments, inventory records, orders, and other transactional data will be permanently deleted.</p>
+            <p>
+              All shipments, inventory records, orders, and other transactional
+              data will be permanently deleted.
+            </p>
           </>
         }
       />

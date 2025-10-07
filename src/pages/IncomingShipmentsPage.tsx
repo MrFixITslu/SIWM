@@ -1,33 +1,56 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { ChevronRightIcon } from '@heroicons/react/24/solid';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import { useSearchParams } from 'react-router-dom';
-import PageContainer from '@/components/PageContainer';
-import Table from '@/components/Table';
-import Modal from '@/components/Modal';
-import ConfirmationModal from '@/components/ConfirmationModal';
+
+import ASNDetailView from '@/components/ASNDetailView';
 import BrokerFeeModal from '@/components/BrokerFeeModal';
-import FinanceApprovalModal from '@/components/FinanceApprovalModal';
-import PaymentConfirmationModal from '@/components/PaymentConfirmationModal';
-import ReceivingModal from '@/components/ReceivingModal';
+import ConfirmationModal from '@/components/ConfirmationModal';
 import ConfirmReceivedModal from '@/components/ConfirmReceivedModal';
 import ErrorMessage from '@/components/ErrorMessage';
-import ASNDetailView from '@/components/ASNDetailView';
+import FinanceApprovalModal from '@/components/FinanceApprovalModal';
+import LoadingSpinner from '@/components/icons/LoadingSpinner';
+import Modal from '@/components/Modal';
+import PageContainer from '@/components/PageContainer';
+import PaymentConfirmationModal from '@/components/PaymentConfirmationModal';
+import ReceivingModal from '@/components/ReceivingModal';
+import Table from '@/components/Table';
+import {
+  PlusIcon,
+  EditIcon,
+  DeleteIcon,
+  SearchIcon,
+  ShipmentIcon,
+  ChevronDownIcon,
+} from '@/constants';
+import { useAuth } from '@/contexts/AuthContext';
 import useConfirmationModal from '@/hooks/useConfirmationModal';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
-import { ASN, ColumnDefinition, Vendor, UserSummary, FeeStatus } from '@/types';
-import { PlusIcon, EditIcon, DeleteIcon, SearchIcon, ShipmentIcon, ChevronDownIcon } from '@/constants';
-import { ChevronRightIcon } from '@heroicons/react/24/solid';
-import { asnService } from '@/services/asnService';
-import { vendorService } from '@/services/vendorService';
-import { userService } from '@/services/userService';
 import { aiInsightService } from '@/services/aiInsightService';
-import LoadingSpinner from '@/components/icons/LoadingSpinner';
-import { useAuth } from '@/contexts/AuthContext';
+import { asnService } from '@/services/asnService';
 import { inventoryService } from '@/services/inventoryService';
+import { userService } from '@/services/userService';
+import { vendorService } from '@/services/vendorService';
+import { ASN, ColumnDefinition, Vendor, UserSummary, FeeStatus } from '@/types';
 
-const TAILWIND_INPUT_CLASSES = "shadow-sm appearance-none border border-secondary-300 bg-white text-secondary-900 rounded-md px-3 py-2 dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm";
-const departmentOptions = ["Digicel+", "Digicel Business", "Commercial", "Marketing", "Outside Plant (OSP)", "Field Force & HVAC"];
+const TAILWIND_INPUT_CLASSES =
+  'shadow-sm appearance-none border border-secondary-300 bg-white text-secondary-900 rounded-md px-3 py-2 dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm';
+const departmentOptions = [
+  'Digicel+',
+  'Digicel Business',
+  'Commercial',
+  'Marketing',
+  'Outside Plant (OSP)',
+  'Field Force & HVAC',
+];
 
 const IncomingShipmentsPage: React.FC = () => {
+  // Version 2.0 - All debug logging completely removed
   const { user } = useAuth();
   const [asns, setAsns] = useState<ASN[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -41,18 +64,27 @@ const IncomingShipmentsPage: React.FC = () => {
   const [fileError, setFileError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
 
-  const { isModalOpen: isConfirmDeleteOpen, confirmButtonText, showConfirmation: showDeleteConfirmation, handleConfirm: handleConfirmDelete, handleClose: handleCloseDeleteConfirm } = useConfirmationModal();
-  
+  const {
+    isModalOpen: isConfirmDeleteOpen,
+    confirmButtonText,
+    showConfirmation: showDeleteConfirmation,
+    handleConfirm: handleConfirmDelete,
+    handleClose: handleCloseDeleteConfirm,
+  } = useConfirmationModal();
+
   const [selectedAsn, setSelectedAsn] = useState<ASN | null>(null);
-  const [aiDelayPrediction, setAiDelayPrediction] = useState<string | null>(null);
+  const [aiDelayPrediction, setAiDelayPrediction] = useState<string | null>(
+    null
+  );
   const [isAiPredictionLoading, setIsAiPredictionLoading] = useState(false);
-  
+
   const [isBrokerFeeModalOpen, setIsBrokerFeeModalOpen] = useState(false);
   const [isFinanceModalOpen, setIsFinanceModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isReceivingModalOpen, setIsReceivingModalOpen] = useState(false);
   const [asnForReceiving, setAsnForReceiving] = useState<ASN | null>(null);
-  const [isConfirmReceivedModalOpen, setIsConfirmReceivedModalOpen] = useState(false);
+  const [isConfirmReceivedModalOpen, setIsConfirmReceivedModalOpen] =
+    useState(false);
   const [asnForConfirming, setAsnForConfirming] = useState<ASN | null>(null);
   const [highlightedRow, setHighlightedRow] = useState<number | null>(null);
 
@@ -88,15 +120,16 @@ const IncomingShipmentsPage: React.FC = () => {
       setAsns(asnData);
       setVendors(vendorData);
       setBrokers(brokersData);
-
     } catch (err: any) {
-      console.error("Failed to fetch page data:", err);
-      let userFriendlyError = "An unexpected error occurred while fetching page data. Please try again.";
+      console.error('Failed to fetch page data:', err);
+      let userFriendlyError =
+        'An unexpected error occurred while fetching page data. Please try again.';
       if (err.message) {
-        if (err.message.toLowerCase().includes("failed to fetch")) {
-            userFriendlyError = "Could not connect to the server to fetch data. Please check your network connection or if the backend service is running.";
+        if (err.message.toLowerCase().includes('failed to fetch')) {
+          userFriendlyError =
+            'Could not connect to the server to fetch data. Please check your network connection or if the backend service is running.';
         } else {
-            userFriendlyError = `Error fetching data: ${err.message}.`;
+          userFriendlyError = `Error fetching data: ${err.message}.`;
         }
       }
       setError(userFriendlyError);
@@ -116,24 +149,17 @@ const IncomingShipmentsPage: React.FC = () => {
     if (supplierFromQuery) {
       setSearchTerm(supplierFromQuery);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on initial mount
 
   // Handle selectedAsn from URL parameter (when returning from inventory page)
   useEffect(() => {
-    console.log('=== URL Parameter Handling Effect ===');
     const selectedAsnId = searchParams.get('selectedAsn');
-    console.log('URL selectedAsnId:', selectedAsnId);
-    console.log('Current asns length:', asns.length);
-    console.log('Current selectedAsn state:', selectedAsn);
     
-    if (selectedAsnId && asns.length > 0) {
+    if (selectedAsnId && asns.length > 0 && !selectedAsn) {
       const asnId = parseInt(selectedAsnId, 10);
-      console.log('Looking for ASN with ID:', asnId);
-      console.log('Available ASNs:', asns.map(a => ({ id: a.id, poNumber: a.poNumber })));
       const foundAsn = asns.find(asn => asn.id === asnId);
-      console.log('Found ASN:', foundAsn);
-      
+
       if (foundAsn) {
         // Force refetch of ASN from backend to ensure status is up to date
         asnService.getASNById(asnId).then(freshAsn => {
@@ -142,7 +168,9 @@ const IncomingShipmentsPage: React.FC = () => {
           const addedItemsParam = searchParams.get('addedItems');
           if (addedItemsParam) {
             try {
-              const addedItems = JSON.parse(decodeURIComponent(addedItemsParam));
+              const addedItems = JSON.parse(
+                decodeURIComponent(addedItemsParam)
+              );
               freshAsn.items = addedItems.map((item: any, index: number) => ({
                 id: -index - 1, // Temporary negative IDs for display
                 asnId: freshAsn.id,
@@ -150,7 +178,7 @@ const IncomingShipmentsPage: React.FC = () => {
                 quantity: item.quantity,
                 newSerials: item.serialNumbers || [],
                 itemName: item.name,
-                itemSku: item.sku
+                itemSku: item.sku,
               }));
             } catch (error) {
               console.error('Error parsing added items:', error);
@@ -162,116 +190,69 @@ const IncomingShipmentsPage: React.FC = () => {
         const newSearchParams = new URLSearchParams(searchParams);
         newSearchParams.delete('selectedAsn');
         newSearchParams.delete('addedItems');
-        window.history.replaceState({}, '', `${window.location.pathname}?${newSearchParams.toString()}`);
-      } else {
-        console.log('ASN not found in current asns list');
+        window.history.replaceState(
+          {},
+          '',
+          `${window.location.pathname}?${newSearchParams.toString()}`
+        );
       }
-    } else if (selectedAsnId && asns.length === 0) {
-      // If we have a selectedAsnId but no ASNs loaded yet, wait a bit and try again
-      console.log('ASNs not loaded yet, will retry...');
-      const timer = setTimeout(() => {
-        const retrySelectedAsnId = searchParams.get('selectedAsn');
-        if (retrySelectedAsnId && asns.length > 0) {
-          console.log('Retrying to find ASN with ID:', retrySelectedAsnId);
-          const asnId = parseInt(retrySelectedAsnId, 10);
-          const foundAsn = asns.find(asn => asn.id === asnId);
-          if (foundAsn) {
-            console.log('Found ASN on retry:', foundAsn);
-            
-            // Check if there are added items from the inventory page
-            const addedItemsParam = searchParams.get('addedItems');
-            if (addedItemsParam) {
-              try {
-                const addedItems = JSON.parse(decodeURIComponent(addedItemsParam));
-                foundAsn.items = addedItems.map((item: any, index: number) => ({
-                  id: -index - 1,
-                  asnId: foundAsn.id,
-                  inventoryItemId: -1,
-                  quantity: item.quantity,
-                  newSerials: item.serialNumbers || [],
-                  itemName: item.name,
-                  itemSku: item.sku
-                }));
-              } catch (error) {
-                console.error('Error parsing added items:', error);
-              }
-            }
-            
-            setSelectedAsn(foundAsn);
-            
-            // Clear the URL parameters
-            const newSearchParams = new URLSearchParams(searchParams);
-            newSearchParams.delete('selectedAsn');
-            newSearchParams.delete('addedItems');
-            window.history.replaceState({}, '', `${window.location.pathname}?${newSearchParams.toString()}`);
-          }
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      console.log('No selectedAsnId or asns not loaded yet');
     }
-    console.log('=== End URL Parameter Handling Effect ===');
-  }, [asns, searchParams]);
+  }, [asns, searchParams]); // Removed selectedAsn from dependencies
 
   // Update selectedAsn when ASNs data changes (for real-time updates)
   useEffect(() => {
-    console.log('=== ASN Update Effect ===');
-    console.log('selectedAsn:', selectedAsn);
-    console.log('asns length:', asns.length);
-    
     if (selectedAsn && asns.length > 0) {
       const updatedSelectedAsn = asns.find(a => a.id === selectedAsn.id);
-      console.log('updatedSelectedAsn:', updatedSelectedAsn);
-      if (updatedSelectedAsn && updatedSelectedAsn !== selectedAsn) {
-        // Preserve any items that were added from URL parameters
-        if (selectedAsn.items && selectedAsn.items.length > 0) {
-          updatedSelectedAsn.items = selectedAsn.items;
+      if (updatedSelectedAsn) {
+        // Only update if there are actual changes (not just reference equality)
+        const hasChanges = JSON.stringify(updatedSelectedAsn) !== JSON.stringify(selectedAsn);
+        if (hasChanges) {
+          // Preserve any items that were added from URL parameters
+          if (selectedAsn.items && selectedAsn.items.length > 0) {
+            updatedSelectedAsn.items = selectedAsn.items;
+          }
+          setSelectedAsn(updatedSelectedAsn);
         }
-        console.log('Setting updated selectedAsn:', updatedSelectedAsn);
-        setSelectedAsn(updatedSelectedAsn);
       }
     }
-    console.log('=== End ASN Update Effect ===');
-  }, [asns, selectedAsn]);
-
-  // Debug render cycle
-  useEffect(() => {
-    console.log('=== RENDER CYCLE ===');
-    console.log('selectedAsn in render:', selectedAsn);
-    console.log('selectedAsn === null:', selectedAsn === null);
-    console.log('selectedAsn === undefined:', selectedAsn === undefined);
-    console.log('Boolean(selectedAsn):', Boolean(selectedAsn));
-  });
+  }, [asns]); // Removed selectedAsn from dependencies to prevent circular updates
 
   // --- Real-time updates ---
-    const handleRealtimeUpdate = useCallback((updatedAsn: ASN) => {
-        setAsns(prev => prev.map(asn => asn.id === updatedAsn.id ? updatedAsn : asn));
-        setSelectedAsn(prevSelected => prevSelected?.id === updatedAsn.id ? updatedAsn : prevSelected);
-        setHighlightedRow(updatedAsn.id);
-        setTimeout(() => setHighlightedRow(null), 2000);
-    }, []);
+  const handleRealtimeUpdate = useCallback((updatedAsn: ASN) => {
+    setAsns(prev =>
+      prev.map(asn => (asn.id === updatedAsn.id ? updatedAsn : asn))
+    );
+    setSelectedAsn(prevSelected =>
+      prevSelected?.id === updatedAsn.id ? updatedAsn : prevSelected
+    );
+    setHighlightedRow(updatedAsn.id);
+    setTimeout(() => setHighlightedRow(null), 2000);
+  }, []);
 
-    const handleRealtimeCreate = useCallback((newAsn: ASN) => {
-        setAsns(prev => [newAsn, ...prev]);
-        setHighlightedRow(newAsn.id);
-        setTimeout(() => setHighlightedRow(null), 2000);
-    }, []);
+  const handleRealtimeCreate = useCallback((newAsn: ASN) => {
+    setAsns(prev => [newAsn, ...prev]);
+    setHighlightedRow(newAsn.id);
+    setTimeout(() => setHighlightedRow(null), 2000);
+  }, []);
 
-    const handleRealtimeDelete = useCallback(({ id }: { id: number }) => {
-        setAsns(prev => prev.filter(asn => asn.id !== id));
-        setSelectedAsn(prevSelected => prevSelected?.id === id ? null : prevSelected);
-    }, []);
+  const handleRealtimeDelete = useCallback(({ id }: { id: number }) => {
+    setAsns(prev => prev.filter(asn => asn.id !== id));
+    setSelectedAsn(prevSelected =>
+      prevSelected?.id === id ? null : prevSelected
+    );
+  }, []);
 
-    const realtimeHandlers = useMemo(() => ({
-        'asn_created': handleRealtimeCreate,
-        'asn_updated': handleRealtimeUpdate,
-        'asn_deleted': handleRealtimeDelete,
-    }), [handleRealtimeCreate, handleRealtimeUpdate, handleRealtimeDelete]);
+  const realtimeHandlers = useMemo(
+    () => ({
+      asn_created: handleRealtimeCreate,
+      asn_updated: handleRealtimeUpdate,
+      asn_deleted: handleRealtimeDelete,
+    }),
+    [handleRealtimeCreate, handleRealtimeUpdate, handleRealtimeDelete]
+  );
 
-    useRealtimeUpdates(realtimeHandlers);
+  useRealtimeUpdates(realtimeHandlers);
   // --- End of real-time updates ---
-
 
   // Add a handler to fetch AI Delay Prediction on button click
   const handleAIDelayPrediction = async () => {
@@ -279,10 +260,11 @@ const IncomingShipmentsPage: React.FC = () => {
       setIsAiPredictionLoading(true);
       setAiDelayPrediction(null);
       try {
-        const prediction = await aiInsightService.getASNDelayPrediction(selectedAsn);
+        const prediction =
+          await aiInsightService.getASNDelayPrediction(selectedAsn);
         setAiDelayPrediction(prediction);
       } catch (predError: any) {
-        setAiDelayPrediction(predError.message || "AI prediction failed.");
+        setAiDelayPrediction(predError.message || 'AI prediction failed.');
       } finally {
         setIsAiPredictionLoading(false);
       }
@@ -291,7 +273,12 @@ const IncomingShipmentsPage: React.FC = () => {
 
   const handleOpenModal = (asn?: ASN) => {
     setError(null);
-    setCurrentAsn(asn || { status: 'On Time', expectedArrival: new Date().toISOString().split('T')[0] });
+    setCurrentAsn(
+      asn || {
+        status: 'On Time',
+        expectedArrival: new Date().toISOString().split('T')[0],
+      }
+    );
     setIsModalOpen(true);
   };
 
@@ -300,8 +287,10 @@ const IncomingShipmentsPage: React.FC = () => {
     setCurrentAsn({});
     setError(null);
   };
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setCurrentAsn(prev => {
       const updatedAsn = { ...prev, [name]: value };
@@ -319,8 +308,16 @@ const IncomingShipmentsPage: React.FC = () => {
     try {
       const asnToSave: any = { ...currentAsn };
       // Validate required fields
-      if (!asnToSave.poNumber || !asnToSave.supplier || !asnToSave.expectedArrival || !asnToSave.carrier || !asnToSave.department) {
-        throw new Error('PO Number, Supplier, Department, Expected Arrival, and Carrier are required fields.');
+      if (
+        !asnToSave.poNumber ||
+        !asnToSave.supplier ||
+        !asnToSave.expectedArrival ||
+        !asnToSave.carrier ||
+        !asnToSave.department
+      ) {
+        throw new Error(
+          'PO Number, Supplier, Department, Expected Arrival, and Carrier are required fields.'
+        );
       }
       // Convert itemCount to number if it's a string
       if (asnToSave.itemCount !== undefined) {
@@ -330,7 +327,10 @@ const IncomingShipmentsPage: React.FC = () => {
             throw new Error('Item count must be a valid non-negative number.');
           }
           asnToSave.itemCount = parsedItemCount;
-        } else if (typeof asnToSave.itemCount !== 'number' || asnToSave.itemCount < 0) {
+        } else if (
+          typeof asnToSave.itemCount !== 'number' ||
+          asnToSave.itemCount < 0
+        ) {
           throw new Error('Item count must be a valid non-negative number.');
         }
       }
@@ -352,7 +352,15 @@ const IncomingShipmentsPage: React.FC = () => {
         asnToSave.brokerId = brokers[0].id;
         asnToSave.brokerName = brokers[0].name;
       }
-      await asnService.createASN(asnToSave);
+      
+      // Check if this is an update or create operation
+      if (asnToSave.id) {
+        // Update existing ASN
+        await asnService.updateASN(asnToSave.id, asnToSave);
+      } else {
+        // Create new ASN
+        await asnService.createASN(asnToSave);
+      }
       setIsModalOpen(false);
       setCurrentAsn({});
       setQuoteFile(null);
@@ -368,59 +376,100 @@ const IncomingShipmentsPage: React.FC = () => {
   };
 
   const handleDeleteAsn = (id: number) => {
-    showDeleteConfirmation(async () => {
-      try {
-        await asnService.deleteASN(id);
-        // No need to call fetchData() here, as real-time update will handle it.
-        // setSelectedAsn(null) is handled by the delete event handler.
-      } catch (err: any) {
-        setError(err.message || "Failed to delete ASN.");
-      }
-    }, { confirmText: 'Confirm Delete' });
+    showDeleteConfirmation(
+      async () => {
+        try {
+          await asnService.deleteASN(id);
+          // No need to call fetchData() here, as real-time update will handle it.
+          // setSelectedAsn(null) is handled by the delete event handler.
+        } catch (err: any) {
+          setError(err.message || 'Failed to delete ASN.');
+        }
+      },
+      { confirmText: 'Confirm Delete' }
+    );
   };
-  
+
   const filteredAsns = useMemo(() => {
     if (!searchTerm.trim()) return asns;
     const lower = searchTerm.toLowerCase();
-    return asns.filter(asn =>
-      asn.poNumber?.toLowerCase().includes(lower) ||
-      asn.supplier.toLowerCase().includes(lower) ||
-      asn.status.toLowerCase().includes(lower) ||
-      asn.carrier.toLowerCase().includes(lower)
+    return asns.filter(
+      asn =>
+        asn.poNumber?.toLowerCase().includes(lower) ||
+        asn.supplier.toLowerCase().includes(lower) ||
+        asn.status.toLowerCase().includes(lower) ||
+        asn.carrier.toLowerCase().includes(lower)
     );
   }, [asns, searchTerm]);
 
   const getStatusBadge = (status: ASN['status']) => {
     const statusColors: Record<ASN['status'], string> = {
-      'On Time': 'bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-200',
-      'Delayed': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200',
-      'At the Warehouse': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-700 dark:text-indigo-200',
-      'Processing': 'bg-purple-100 text-purple-800 dark:bg-purple-700 dark:text-purple-200',
-      'Discrepancy Review': 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-200',
-      'Complete': 'bg-teal-200 text-teal-900 dark:bg-teal-800 dark:text-teal-100',
+      'On Time':
+        'bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-200',
+      Delayed:
+        'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200',
+      'At the Warehouse':
+        'bg-indigo-100 text-indigo-800 dark:bg-indigo-700 dark:text-indigo-200',
+      Processing:
+        'bg-purple-100 text-purple-800 dark:bg-purple-700 dark:text-purple-200',
+      'Discrepancy Review':
+        'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-200',
+      Complete: 'bg-teal-200 text-teal-900 dark:bg-teal-800 dark:text-teal-100',
     };
     const label = status;
-    return <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}>{label}</span>;
+    return (
+      <span
+        className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}
+      >
+        {label}
+      </span>
+    );
   };
 
   const getFeeStatusBadge = (status?: FeeStatus) => {
     if (!status) return null;
     const statusColors: Record<FeeStatus, string> = {
-        [FeeStatus.PendingSubmission]: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
-        [FeeStatus.PendingApproval]: 'bg-yellow-100 dark:bg-yellow-700 text-yellow-800 dark:text-yellow-200',
-        [FeeStatus.Approved]: 'bg-teal-100 dark:bg-teal-700 text-teal-800 dark:text-teal-200',
-        [FeeStatus.PaymentConfirmed]: 'bg-green-100 dark:bg-green-700 text-green-800 dark:text-green-200',
-        [FeeStatus.Rejected]: 'bg-red-100 dark:bg-red-700 text-red-800 dark:text-red-200',
+      [FeeStatus.PendingSubmission]:
+        'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
+      [FeeStatus.PendingApproval]:
+        'bg-yellow-100 dark:bg-yellow-700 text-yellow-800 dark:text-yellow-200',
+      [FeeStatus.Approved]:
+        'bg-teal-100 dark:bg-teal-700 text-teal-800 dark:text-teal-200',
+      [FeeStatus.PaymentConfirmed]:
+        'bg-green-100 dark:bg-green-700 text-green-800 dark:text-green-200',
+      [FeeStatus.Rejected]:
+        'bg-red-100 dark:bg-red-700 text-red-800 dark:text-red-200',
     };
-    return <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}>{status}</span>;
+    return (
+      <span
+        className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}
+      >
+        {status}
+      </span>
+    );
   };
-  
+
   const tableActions = (item: ASN) => (
     <div className="flex space-x-1">
-      <button onClick={(e) => { e.stopPropagation(); handleOpenModal(item);}} className="text-primary-600 hover:text-primary-800 p-1" title="Edit Shipment" disabled={item.status === 'Complete'}>
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          handleOpenModal(item);
+        }}
+        className="text-primary-600 hover:text-primary-800 p-1"
+        title="Edit Shipment"
+        disabled={item.status === 'Complete'}
+      >
         <EditIcon className="h-5 w-5" />
       </button>
-      <button onClick={(e) => { e.stopPropagation(); handleDeleteAsn(item.id);}} className="text-red-600 hover:text-red-800 p-1" title="Delete Shipment">
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          handleDeleteAsn(item.id);
+        }}
+        className="text-red-600 hover:text-red-800 p-1"
+        title="Delete Shipment"
+      >
         <DeleteIcon className="h-5 w-5" />
       </button>
     </div>
@@ -430,10 +479,20 @@ const IncomingShipmentsPage: React.FC = () => {
     { key: 'poNumber', header: 'P.O. #', sortable: true },
     { key: 'supplier', header: 'Supplier', sortable: true },
     { key: 'expectedArrival', header: 'Expected Arrival', sortable: true },
-    { key: 'feeStatus', header: 'Fee Status', render: item => getFeeStatusBadge(item.feeStatus), sortable: true },
-    { key: 'status', header: 'Status', sortable: true, render: (item) => getStatusBadge(item.status) },
+    {
+      key: 'feeStatus',
+      header: 'Fee Status',
+      render: item => getFeeStatusBadge(item.feeStatus),
+      sortable: true,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      render: item => getStatusBadge(item.status),
+    },
   ];
-  
+
   const handleOpenBrokerFeeModal = (asn: ASN) => {
     setSelectedAsn(asn);
     setIsBrokerFeeModalOpen(true);
@@ -443,22 +502,22 @@ const IncomingShipmentsPage: React.FC = () => {
     setSelectedAsn(asn);
     setIsFinanceModalOpen(true);
   };
-  
+
   const handleOpenPaymentModal = (asn: ASN) => {
     setSelectedAsn(asn);
     setIsPaymentModalOpen(true);
   };
-  
+
   const handleOpenReceivingModal = (asn: ASN) => {
     setAsnForReceiving(asn);
     setIsReceivingModalOpen(true);
   };
-  
+
   const handleOpenConfirmReceivedModal = (asn: ASN) => {
     setAsnForConfirming(asn);
     setIsConfirmReceivedModalOpen(true);
   };
-  
+
   // Handler to confirm processed
   const handleConfirmProcessed = async (asn: ASN) => {
     try {
@@ -467,7 +526,7 @@ const IncomingShipmentsPage: React.FC = () => {
       setError(err.message || 'Failed to update status to Complete.');
     }
   };
-  
+
   // Handler to complete shipment
   const handleCompleteShipment = async (asn: ASN) => {
     setError(null);
@@ -485,8 +544,20 @@ const IncomingShipmentsPage: React.FC = () => {
 
   // Filter for completed shipments (Complete within 30 days)
   const now = new Date();
-  const completedShipments = asns.filter(asn => asn.status === 'Complete' && asn.completedAt && (now.getTime() - new Date(asn.completedAt).getTime()) < 30 * 24 * 60 * 60 * 1000);
-  const activeAsns = filteredAsns.filter(asn => asn.status !== 'Complete' || !asn.completedAt || (now.getTime() - new Date(asn.completedAt).getTime()) >= 30 * 24 * 60 * 60 * 1000);
+  const completedShipments = asns.filter(
+    asn =>
+      asn.status === 'Complete' &&
+      asn.completedAt &&
+      now.getTime() - new Date(asn.completedAt).getTime() <
+        30 * 24 * 60 * 60 * 1000
+  );
+  const activeAsns = filteredAsns.filter(
+    asn =>
+      asn.status !== 'Complete' ||
+      !asn.completedAt ||
+      now.getTime() - new Date(asn.completedAt).getTime() >=
+        30 * 24 * 60 * 60 * 1000
+  );
 
   const [showCompletedReport, setShowCompletedReport] = useState(false);
 
@@ -505,48 +576,78 @@ const IncomingShipmentsPage: React.FC = () => {
   const completedColumns: ColumnDefinition<any, any>[] = [
     { key: 'poNumber', header: 'P.O. #', sortable: true },
     { key: 'department', header: 'Department', sortable: true },
-    { key: 'createdAt', header: 'Arrival at Warehouse', sortable: true, render: (item) => item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A' },
-    { key: 'completedAt', header: 'Completed', sortable: true, render: (item) => item.completedAt ? new Date(item.completedAt).toLocaleDateString() : 'N/A' },
-    { key: 'itemsAndLocations', header: 'Items & Location', render: (item) => (
-      <ul className="text-xs">
-        {(item.items || []).map((itm: any, idx: number) => (
-          <li key={idx}>
-            {itm.itemName} ({itm.quantity}){typeof itm.inventoryItemId === 'number' && inventoryMap[itm.inventoryItemId] ? ` - ${inventoryMap[itm.inventoryItemId]}` : ''}
-          </li>
-        ))}
-      </ul>
-    ) },
+    {
+      key: 'createdAt',
+      header: 'Arrival at Warehouse',
+      sortable: true,
+      render: item =>
+        item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A',
+    },
+    {
+      key: 'completedAt',
+      header: 'Completed',
+      sortable: true,
+      render: item =>
+        item.completedAt
+          ? new Date(item.completedAt).toLocaleDateString()
+          : 'N/A',
+    },
+    {
+      key: 'itemsAndLocations',
+      header: 'Items & Location',
+      render: item => (
+        <ul className="text-xs">
+          {(item.items || []).map((itm: any, idx: number) => (
+            <li key={idx}>
+              {itm.itemName} ({itm.quantity})
+              {typeof itm.inventoryItemId === 'number' &&
+              inventoryMap[itm.inventoryItemId]
+                ? ` - ${inventoryMap[itm.inventoryItemId]}`
+                : ''}
+            </li>
+          ))}
+        </ul>
+      ),
+    },
   ];
 
   // File validation helpers
-  const MAX_FILE_SIZE_MB = 10;
+  const MAX_FILE_SIZE_MB = 50;
   const ALLOWED_FILE_TYPES = [
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'image/jpeg',
     'image/png',
   ];
 
-  const handleFileChange = (setter: (file: File | null) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    if (file) {
-      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        setFileError(`File is too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`);
+  const handleFileChange =
+    (setter: (file: File | null) => void) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0] || null;
+      if (file) {
+        if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+          setFileError(
+            `File is too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`
+          );
+          setter(null);
+          return;
+        }
+        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+          setFileError(
+            'Invalid file type. Only PDF, Word, Excel, JPG, and PNG files are allowed.'
+          );
+          setter(null);
+          return;
+        }
+        setFileError(null);
+        setter(file);
+      } else {
         setter(null);
-        return;
       }
-      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-        setFileError('Invalid file type. Only PDF, Word, JPG, and PNG files are allowed.');
-        setter(null);
-        return;
-      }
-      setFileError(null);
-      setter(file);
-    } else {
-      setter(null);
-    }
-  };
+    };
 
   return (
     <PageContainer
@@ -564,157 +665,372 @@ const IncomingShipmentsPage: React.FC = () => {
       }
     >
       <ErrorMessage message={error} />
-      
+
       <div className="mb-4">
         <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <SearchIcon className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <SearchIcon className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
             type="text"
             placeholder="Search by PO#, supplier, status, carrier..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md leading-5 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100 placeholder-secondary-400 dark:placeholder-secondary-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-            />
+          />
         </div>
       </div>
-      
+
       <div className="space-y-6">
         <div>
-            {isLoading && asns.length > 0 && <div className="absolute top-4 right-4"><LoadingSpinner className="w-6 h-6 text-primary-500" /></div>}
-            
-            {!isLoading && filteredAsns.length === 0 && !error && (
-                <p className="text-center text-secondary-500 dark:text-secondary-400 py-8">
-                {searchTerm ? 'No shipments found matching your search.' : 'No incoming shipments available.'}
-                </p>
-            )}
-            {!isLoading && filteredAsns.length > 0 && (
-                <Table<ASN>
-                columns={columns}
-                data={activeAsns}
-                onRowClick={(asn) => setSelectedAsn(asn)}
-                actions={tableActions}
-                rowClassName={(item) => highlightedRow === item.id ? 'animate-row-highlight' : ''}
-                />
-            )}
-        </div>
-        
-        {selectedAsn && selectedAsn.id ? (
-            <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-lg p-6">
-                <ASNDetailView
-                    asn={selectedAsn}
-                    user={user}
-                    onClose={() => setSelectedAsn(null)}
-                    onEnterFees={handleOpenBrokerFeeModal}
-                    onApproveFees={handleOpenFinanceModal}
-                    onConfirmPayment={handleOpenPaymentModal}
-                    onConfirmArrival={handleOpenReceivingModal}
-                    onConfirmProcessed={handleConfirmProcessed}
-                    onConfirmReceived={handleOpenConfirmReceivedModal}
-                    onCompleteShipment={handleCompleteShipment}
-                />
-                
-                <div className="mt-6 bg-secondary-50 dark:bg-secondary-700 p-4 rounded-xl">
-                    <h4 className="text-md font-semibold text-secondary-800 dark:text-secondary-200 mb-2 flex items-center">
-                        <ShipmentIcon className="h-5 w-5 mr-2 text-purple-500" /> AI Delay Prediction
-                    </h4>
-                    <button
-                        onClick={handleAIDelayPrediction}
-                        className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md font-medium mb-2"
-                        disabled={isAiPredictionLoading}
-                    >
-                        {isAiPredictionLoading ? 'Generating...' : 'Generate AI Prediction'}
-                    </button>
-                    {aiDelayPrediction && (
-                        <p className="text-sm text-secondary-700 dark:text-secondary-300 mt-2">{aiDelayPrediction}</p>
-                    )}
-                </div>
+          {isLoading && asns.length > 0 && (
+            <div className="absolute top-4 right-4">
+              <LoadingSpinner className="w-6 h-6 text-primary-500" />
             </div>
+          )}
+
+          {!isLoading && filteredAsns.length === 0 && !error && (
+            <p className="text-center text-secondary-500 dark:text-secondary-400 py-8">
+              {searchTerm
+                ? 'No shipments found matching your search.'
+                : 'No incoming shipments available.'}
+            </p>
+          )}
+          {!isLoading && filteredAsns.length > 0 && (
+            <Table<ASN>
+              columns={columns}
+              data={activeAsns}
+              onRowClick={asn => setSelectedAsn(asn)}
+              actions={tableActions}
+              rowClassName={item =>
+                highlightedRow === item.id ? 'animate-row-highlight' : ''
+              }
+            />
+          )}
+        </div>
+
+        {selectedAsn && selectedAsn.id ? (
+          <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-lg p-6">
+            <ASNDetailView
+              asn={selectedAsn}
+              user={user}
+              onClose={() => setSelectedAsn(null)}
+              onEnterFees={handleOpenBrokerFeeModal}
+              onApproveFees={handleOpenFinanceModal}
+              onConfirmPayment={handleOpenPaymentModal}
+              onConfirmArrival={handleOpenReceivingModal}
+              onConfirmProcessed={handleConfirmProcessed}
+              onConfirmReceived={handleOpenConfirmReceivedModal}
+              onCompleteShipment={handleCompleteShipment}
+            />
+
+            <div className="mt-6 bg-secondary-50 dark:bg-secondary-700 p-4 rounded-xl">
+              <h4 className="text-md font-semibold text-secondary-800 dark:text-secondary-200 mb-2 flex items-center">
+                <ShipmentIcon className="h-5 w-5 mr-2 text-purple-500" /> AI
+                Delay Prediction
+              </h4>
+              <button
+                onClick={handleAIDelayPrediction}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md font-medium mb-2"
+                disabled={isAiPredictionLoading}
+              >
+                {isAiPredictionLoading
+                  ? 'Generating...'
+                  : 'Generate AI Prediction'}
+              </button>
+              {aiDelayPrediction && (
+                <p className="text-sm text-secondary-700 dark:text-secondary-300 mt-2">
+                  {aiDelayPrediction}
+                </p>
+              )}
+            </div>
+          </div>
         ) : null}
       </div>
-      
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={currentAsn.id ? 'Edit Shipment' : 'Add Incoming Shipment'} size="lg" contentRef={modalContentRef}>
-        <form onSubmit={(e) => { e.preventDefault(); handleSaveAsn(); }} className="space-y-4">
-            {error && <ErrorMessage message={error}/>}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                  <label htmlFor="poNumber" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">P.O. Number</label>
-                  <input type="text" name="poNumber" id="poNumber" value={currentAsn.poNumber || ''} onChange={handleInputChange} required className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`} />
-              </div>
-              <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Department</label>
-                  <select name="department" id="department" value={currentAsn.department || ''} onChange={handleInputChange} required className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`}>
-                      <option value="">Select Department</option>
-                      {departmentOptions.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
-              </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={currentAsn.id ? 'Edit Shipment' : 'Add Incoming Shipment'}
+        size="lg"
+        contentRef={modalContentRef}
+      >
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleSaveAsn();
+          }}
+          className="space-y-4"
+        >
+          {error && <ErrorMessage message={error} />}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="poNumber"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                P.O. Number
+              </label>
+              <input
+                type="text"
+                name="poNumber"
+                id="poNumber"
+                value={currentAsn.poNumber || ''}
+                onChange={handleInputChange}
+                required
+                className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`}
+              />
             </div>
-            {/* File Uploads for Quotes, P.O.s, Invoices, Bill of Lading */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="quoteFile" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Upload Quote</label>
-                <input type="file" id="quoteFile" name="quoteFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleFileChange(setQuoteFile)} className="mt-1 block w-full text-sm text-secondary-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-secondary-700 dark:file:text-secondary-200 dark:hover:file:bg-secondary-600" />
-                {quoteFile && <p className="text-xs text-secondary-500 mt-1">File selected: {quoteFile.name}</p>}
-                {fileError && <div className="text-red-600 text-xs mt-2">{fileError}</div>}
-              </div>
-              <div>
-                <label htmlFor="poFile" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Upload P.O.</label>
-                <input type="file" id="poFile" name="poFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleFileChange(setPoFile)} className="mt-1 block w-full text-sm text-secondary-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-secondary-700 dark:file:text-secondary-200 dark:hover:file:bg-secondary-600" />
-                {poFile && <p className="text-xs text-secondary-500 mt-1">File selected: {poFile.name}</p>}
-                {fileError && <div className="text-red-600 text-xs mt-2">{fileError}</div>}
-              </div>
+            <div>
+              <label
+                htmlFor="department"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Department
+              </label>
+              <select
+                name="department"
+                id="department"
+                value={currentAsn.department || ''}
+                onChange={handleInputChange}
+                required
+                className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`}
+              >
+                <option value="">Select Department</option>
+                {departmentOptions.map(d => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="invoiceFile" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Upload Invoice</label>
-                <input type="file" id="invoiceFile" name="invoiceFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleFileChange(setInvoiceFile)} className="mt-1 block w-full text-sm text-secondary-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-secondary-700 dark:file:text-secondary-200 dark:hover:file:bg-secondary-600" />
-                {invoiceFile && <p className="text-xs text-secondary-500 mt-1">File selected: {invoiceFile.name}</p>}
-                {fileError && <div className="text-red-600 text-xs mt-2">{fileError}</div>}
-              </div>
-              <div>
-                <label htmlFor="bolFile" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Upload Bill of Lading</label>
-                <input type="file" id="bolFile" name="bolFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleFileChange(setBolFile)} className="mt-1 block w-full text-sm text-secondary-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-secondary-700 dark:file:text-secondary-200 dark:hover:file:bg-secondary-600" />
-                {bolFile && <p className="text-xs text-secondary-500 mt-1">File selected: {bolFile.name}</p>}
-                {fileError && <div className="text-red-600 text-xs mt-2">{fileError}</div>}
-              </div>
+          </div>
+          {/* File Uploads for Quotes, P.O.s, Invoices, Bill of Lading */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="quoteFile"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Upload Quote
+              </label>
+              <input
+                type="file"
+                id="quoteFile"
+                name="quoteFile"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls"
+                onChange={handleFileChange(setQuoteFile)}
+                className="mt-1 block w-full text-sm text-secondary-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-secondary-700 dark:file:text-secondary-200 dark:hover:file:bg-secondary-600"
+              />
+              {quoteFile && (
+                <p className="text-xs text-secondary-500 mt-1">
+                  File selected: {quoteFile.name}
+                </p>
+              )}
+              {fileError && (
+                <div className="text-red-600 text-xs mt-2">{fileError}</div>
+              )}
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                  <label htmlFor="supplier" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Supplier</label>
-                  <select name="supplier" id="supplier" value={currentAsn.supplier || ''} onChange={handleInputChange} required className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`}>
-                    <option value="">Select a vendor</option>
-                    {vendors.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
-                  </select>
-              </div>
-              <div>
-                  <label htmlFor="expectedArrival" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Expected Arrival Date</label>
-                  <input type="date" name="expectedArrival" id="expectedArrival" value={currentAsn.expectedArrival || ''} onChange={handleInputChange} required className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`} />
-              </div>
+            <div>
+              <label
+                htmlFor="poFile"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Upload P.O.
+              </label>
+              <input
+                type="file"
+                id="poFile"
+                name="poFile"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls"
+                onChange={handleFileChange(setPoFile)}
+                className="mt-1 block w-full text-sm text-secondary-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-secondary-700 dark:file:text-secondary-200 dark:hover:file:bg-secondary-600"
+              />
+              {poFile && (
+                <p className="text-xs text-secondary-500 mt-1">
+                  File selected: {poFile.name}
+                </p>
+              )}
+              {fileError && (
+                <div className="text-red-600 text-xs mt-2">{fileError}</div>
+              )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                  <label htmlFor="carrier" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Carrier</label>
-                  <input type="text" name="carrier" id="carrier" value={currentAsn.carrier || ''} onChange={handleInputChange} required className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`} />
-              </div>
-               <div>
-                  <label htmlFor="itemCount" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Total Item Count</label>
-                  <input type="number" name="itemCount" id="itemCount" value={currentAsn.itemCount ?? ''} onChange={handleInputChange} min="0" required className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`} />
-              </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="invoiceFile"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Upload Invoice
+              </label>
+              <input
+                type="file"
+                id="invoiceFile"
+                name="invoiceFile"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls"
+                onChange={handleFileChange(setInvoiceFile)}
+                className="mt-1 block w-full text-sm text-secondary-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-secondary-700 dark:file:text-secondary-200 dark:hover:file:bg-secondary-600"
+              />
+              {invoiceFile && (
+                <p className="text-xs text-secondary-500 mt-1">
+                  File selected: {invoiceFile.name}
+                </p>
+              )}
+              {fileError && (
+                <div className="text-red-600 text-xs mt-2">{fileError}</div>
+              )}
             </div>
-             <div>
-                <label htmlFor="brokerId" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Assign Broker</label>
-                <select name="brokerId" id="brokerId" value={currentAsn.brokerId || ''} onChange={handleInputChange} required className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`}>
-                    <option value="">Select a Broker</option>
-                    {brokers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
+            <div>
+              <label
+                htmlFor="bolFile"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Upload Bill of Lading
+              </label>
+              <input
+                type="file"
+                id="bolFile"
+                name="bolFile"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls"
+                onChange={handleFileChange(setBolFile)}
+                className="mt-1 block w-full text-sm text-secondary-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-secondary-700 dark:file:text-secondary-200 dark:hover:file:bg-secondary-600"
+              />
+              {bolFile && (
+                <p className="text-xs text-secondary-500 mt-1">
+                  File selected: {bolFile.name}
+                </p>
+              )}
+              {fileError && (
+                <div className="text-red-600 text-xs mt-2">{fileError}</div>
+              )}
             </div>
-            <div className="flex justify-end space-x-3 pt-4">
-              <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-secondary-700 dark:text-secondary-300 bg-secondary-100 dark:bg-secondary-600 hover:bg-secondary-200 dark:hover:bg-secondary-500 rounded-md shadow-sm" disabled={isSaving}>Cancel</button>
-              <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm disabled:opacity-50" disabled={isSaving}>
-                {isSaving ? <LoadingSpinner className="w-5 h-5" /> : (currentAsn.id ? 'Save Changes' : 'Add Shipment')}
-              </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="supplier"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Supplier
+              </label>
+              <select
+                name="supplier"
+                id="supplier"
+                value={currentAsn.supplier || ''}
+                onChange={handleInputChange}
+                required
+                className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`}
+              >
+                <option value="">Select a vendor</option>
+                {vendors.map(v => (
+                  <option key={v.id} value={v.name}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
             </div>
+            <div>
+              <label
+                htmlFor="expectedArrival"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Expected Arrival Date
+              </label>
+              <input
+                type="date"
+                name="expectedArrival"
+                id="expectedArrival"
+                value={currentAsn.expectedArrival || ''}
+                onChange={handleInputChange}
+                required
+                className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="carrier"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Carrier
+              </label>
+              <input
+                type="text"
+                name="carrier"
+                id="carrier"
+                value={currentAsn.carrier || ''}
+                onChange={handleInputChange}
+                required
+                className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="itemCount"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Total Item Count
+              </label>
+              <input
+                type="number"
+                name="itemCount"
+                id="itemCount"
+                value={currentAsn.itemCount ?? ''}
+                onChange={handleInputChange}
+                min="0"
+                required
+                className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`}
+              />
+            </div>
+          </div>
+          <div>
+            <label
+              htmlFor="brokerId"
+              className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+            >
+              Assign Broker
+            </label>
+            <select
+              name="brokerId"
+              id="brokerId"
+              value={currentAsn.brokerId || ''}
+              onChange={handleInputChange}
+              required
+              className={`mt-1 block w-full ${TAILWIND_INPUT_CLASSES}`}
+            >
+              <option value="">Select a Broker</option>
+              {brokers.map(b => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="px-4 py-2 text-sm font-medium text-secondary-700 dark:text-secondary-300 bg-secondary-100 dark:bg-secondary-600 hover:bg-secondary-200 dark:hover:bg-secondary-500 rounded-md shadow-sm"
+              disabled={isSaving}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm disabled:opacity-50"
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <LoadingSpinner className="w-5 h-5" />
+              ) : currentAsn.id ? (
+                'Save Changes'
+              ) : (
+                'Add Shipment'
+              )}
+            </button>
+          </div>
         </form>
       </Modal>
 
@@ -727,7 +1043,7 @@ const IncomingShipmentsPage: React.FC = () => {
         confirmButtonText={confirmButtonText}
       />
 
-       <BrokerFeeModal
+      <BrokerFeeModal
         isOpen={isBrokerFeeModalOpen}
         onClose={() => setIsBrokerFeeModalOpen(false)}
         shipment={selectedAsn}
@@ -739,11 +1055,11 @@ const IncomingShipmentsPage: React.FC = () => {
         isOpen={isFinanceModalOpen}
         onClose={() => setIsFinanceModalOpen(false)}
         shipment={selectedAsn}
-                        onActionComplete={fetchData}
+        onActionComplete={fetchData}
         onApproveFees={asnService.approveFees}
       />
 
-       <PaymentConfirmationModal
+      <PaymentConfirmationModal
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         shipment={selectedAsn}
@@ -764,12 +1080,12 @@ const IncomingShipmentsPage: React.FC = () => {
         shipment={asnForConfirming}
         onConfirmComplete={fetchData}
       />
-      
+
       {/* Completed Shipments Expandable Section */}
       <div className="mt-10">
         <button
           className="flex items-center text-lg font-semibold text-teal-700 dark:text-teal-300 mb-4 focus:outline-none"
-          onClick={() => setShowCompletedReport((prev) => !prev)}
+          onClick={() => setShowCompletedReport(prev => !prev)}
           aria-expanded={showCompletedReport}
         >
           {showCompletedReport ? (
@@ -783,13 +1099,14 @@ const IncomingShipmentsPage: React.FC = () => {
           <Table<ASN>
             columns={completedColumns as any}
             data={completedShipments}
-            onRowClick={(asn) => setSelectedAsn(asn)}
+            onRowClick={asn => setSelectedAsn(asn)}
             actions={undefined}
-            rowClassName={(item) => highlightedRow === item.id ? 'animate-row-highlight' : ''}
+            rowClassName={item =>
+              highlightedRow === item.id ? 'animate-row-highlight' : ''
+            }
           />
         )}
       </div>
-      
     </PageContainer>
   );
 };

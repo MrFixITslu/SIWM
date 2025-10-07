@@ -1,7 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
-import { ColumnDefinition } from '@/types';
+
 import { ChevronUpIcon, ChevronDownIcon } from '@/constants';
+import { ColumnDefinition } from '@/types';
 
 interface TableProps<T> {
   columns: ColumnDefinition<T, keyof T>[];
@@ -16,10 +16,17 @@ type SortConfig<T> = {
   direction: 'ascending' | 'descending';
 };
 
-const TableInner = <T extends Record<string, any>>(
-  { columns, data, onRowClick, actions, rowClassName }: TableProps<T>
-): React.ReactElement => {
-  const [sortConfig, setSortConfig] = useState<SortConfig<T>>({ key: null, direction: 'ascending' });
+const TableInner = <T extends Record<string, any>>({
+  columns,
+  data,
+  onRowClick,
+  actions,
+  rowClassName,
+}: TableProps<T>): React.ReactElement => {
+  const [sortConfig, setSortConfig] = useState<SortConfig<T>>({
+    key: null,
+    direction: 'ascending',
+  });
 
   const sortedData = useMemo(() => {
     // Ensure data is an array before attempting to sort.
@@ -57,7 +64,9 @@ const TableInner = <T extends Record<string, any>>(
 
   const getSortIcon = (columnKey: keyof T) => {
     if (sortConfig.key !== columnKey) {
-      return <ChevronDownIcon className="h-4 w-4 text-secondary-400 dark:text-secondary-500 opacity-50 group-hover:opacity-100" />;
+      return (
+        <ChevronDownIcon className="h-4 w-4 text-secondary-400 dark:text-secondary-500 opacity-50 group-hover:opacity-100" />
+      );
     }
     return sortConfig.direction === 'ascending' ? (
       <ChevronUpIcon className="h-4 w-4 text-primary-500 dark:text-primary-400" />
@@ -71,23 +80,34 @@ const TableInner = <T extends Record<string, any>>(
       <table className="min-w-full divide-y divide-border text-sm font-sans">
         <thead className="bg-background dark:bg-secondary-700">
           <tr>
-            {columns.map((column) => (
+            {columns.map(column => (
               <th
                 key={String(column.key)}
                 scope="col"
                 className={`px-6 py-3 text-left text-xs font-semibold text-text-secondary dark:text-secondary-300 uppercase tracking-wider select-none ${column.sortable ? 'cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/20 group transition-colors duration-150' : ''}`}
                 onClick={() => column.sortable && requestSort(column.key)}
                 tabIndex={column.sortable ? 0 : -1}
-                aria-sort={sortConfig.key === column.key ? (sortConfig.direction === 'ascending' ? 'ascending' : 'descending') : 'none'}
+                aria-sort={
+                  sortConfig.key === column.key
+                    ? sortConfig.direction === 'ascending'
+                      ? 'ascending'
+                      : 'descending'
+                    : 'none'
+                }
               >
                 <div className="flex items-center">
                   {column.header}
-                  {column.sortable && <span className="ml-1">{getSortIcon(column.key)}</span>}
+                  {column.sortable && (
+                    <span className="ml-1">{getSortIcon(column.key)}</span>
+                  )}
                 </div>
               </th>
             ))}
             {actions && (
-              <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-text-secondary dark:text-secondary-300 uppercase tracking-wider">
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-semibold text-text-secondary dark:text-secondary-300 uppercase tracking-wider"
+              >
                 Actions
               </th>
             )}
@@ -96,22 +116,30 @@ const TableInner = <T extends Record<string, any>>(
         <tbody className="bg-surface dark:bg-secondary-800 divide-y divide-border">
           {sortedData.length === 0 ? (
             <tr>
-              <td colSpan={columns.length + (actions ? 1 : 0)} className="px-6 py-8 text-center text-text-secondary dark:text-secondary-400">
+              <td
+                colSpan={columns.length + (actions ? 1 : 0)}
+                className="px-6 py-8 text-center text-text-secondary dark:text-secondary-400"
+              >
                 No data available.
               </td>
             </tr>
           ) : (
             sortedData.map((item, index) => (
-              <tr 
+              <tr
                 key={item.id || `row-${index}`}
                 className={`transition-colors duration-150 focus-within:bg-primary-50/40 dark:focus-within:bg-primary-900/10 ${onRowClick ? 'cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/10' : 'hover:bg-primary-50 dark:hover:bg-primary-900/10'} ${rowClassName ? rowClassName(item) : ''}`}
                 onClick={() => onRowClick?.(item)}
                 tabIndex={0}
                 aria-label={columns.map(col => String(item[col.key])).join(' ')}
               >
-                {columns.map((column) => (
-                  <td key={`${item.id}-${String(column.key)}`} className="px-6 py-4 whitespace-nowrap text-text-primary dark:text-secondary-100 align-middle">
-                    {column.render ? column.render(item) : String(item[column.key] ?? '')}
+                {columns.map(column => (
+                  <td
+                    key={`${item.id}-${String(column.key)}`}
+                    className="px-6 py-4 whitespace-nowrap text-text-primary dark:text-secondary-100 align-middle"
+                  >
+                    {column.render
+                      ? column.render(item)
+                      : String(item[column.key] ?? '')}
                   </td>
                 ))}
                 {actions && (

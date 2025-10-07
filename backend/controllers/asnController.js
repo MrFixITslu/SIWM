@@ -24,28 +24,34 @@ const getASNById = async (req, res, next) => {
 };
 
 const createASN = async (req, res, next) => {
-  // Handle uploaded files
-  if (req.files) {
-    if (req.files['quoteFile'] && req.files['quoteFile'][0]) {
-      req.body.quoteFileData = req.files['quoteFile'][0].buffer.toString('base64');
-      req.body.quoteFileName = req.files['quoteFile'][0].originalname;
+  try {
+    // Handle uploaded files
+    if (req.files) {
+      if (req.files['quoteFile'] && req.files['quoteFile'][0]) {
+        req.body.quoteFileData = req.files['quoteFile'][0].buffer.toString('base64');
+        req.body.quoteFileName = req.files['quoteFile'][0].originalname;
+      }
+      if (req.files['poFile'] && req.files['poFile'][0]) {
+        req.body.poFileData = req.files['poFile'][0].buffer.toString('base64');
+        req.body.poFileName = req.files['poFile'][0].originalname;
+      }
+      if (req.files['invoiceFile'] && req.files['invoiceFile'][0]) {
+        req.body.vendorInvoiceData = req.files['invoiceFile'][0].buffer.toString('base64');
+        req.body.vendorInvoiceName = req.files['invoiceFile'][0].originalname;
+      }
+      if (req.files['bolFile'] && req.files['bolFile'][0]) {
+        req.body.billOfLadingData = req.files['bolFile'][0].buffer.toString('base64');
+        req.body.billOfLadingName = req.files['bolFile'][0].originalname;
+      }
     }
-    if (req.files['poFile'] && req.files['poFile'][0]) {
-      req.body.poFileData = req.files['poFile'][0].buffer.toString('base64');
-      req.body.poFileName = req.files['poFile'][0].originalname;
-    }
-    if (req.files['invoiceFile'] && req.files['invoiceFile'][0]) {
-      req.body.invoiceFileData = req.files['invoiceFile'][0].buffer.toString('base64');
-      req.body.invoiceFileName = req.files['invoiceFile'][0].originalname;
-    }
-    if (req.files['bolFile'] && req.files['bolFile'][0]) {
-      req.body.bolFileData = req.files['bolFile'][0].buffer.toString('base64');
-      req.body.bolFileName = req.files['bolFile'][0].originalname;
-    }
+  } catch (fileError) {
+    console.error('File processing error:', fileError);
+    res.status(400);
+    return next(new Error('Error processing uploaded files. Please check file size and format.'));
   }
   const { 
     supplier, expectedArrival, itemCount, carrier, items, status, poNumber, department, 
-    poFileData, poFileName, vendorInvoiceData, vendorInvoiceName, shippingInvoiceData, 
+    quoteFileData, quoteFileName, poFileData, poFileName, vendorInvoiceData, vendorInvoiceName, shippingInvoiceData, 
     shippingInvoiceName, billOfLadingData, billOfLadingName, brokerId, brokerName
   } = req.body;
   
@@ -93,6 +99,26 @@ const updateASN = async (req, res, next) => {
     res.status(400); return next(new Error('Invalid ASN ID format. ID must be a number.'));
   }
   try {
+    // Handle uploaded files for updates
+    if (req.files) {
+      if (req.files['quoteFile'] && req.files['quoteFile'][0]) {
+        req.body.quoteFileData = req.files['quoteFile'][0].buffer.toString('base64');
+        req.body.quoteFileName = req.files['quoteFile'][0].originalname;
+      }
+      if (req.files['poFile'] && req.files['poFile'][0]) {
+        req.body.poFileData = req.files['poFile'][0].buffer.toString('base64');
+        req.body.poFileName = req.files['poFile'][0].originalname;
+      }
+      if (req.files['invoiceFile'] && req.files['invoiceFile'][0]) {
+        req.body.vendorInvoiceData = req.files['invoiceFile'][0].buffer.toString('base64');
+        req.body.vendorInvoiceName = req.files['invoiceFile'][0].originalname;
+      }
+      if (req.files['bolFile'] && req.files['bolFile'][0]) {
+        req.body.billOfLadingData = req.files['bolFile'][0].buffer.toString('base64');
+        req.body.billOfLadingName = req.files['bolFile'][0].originalname;
+      }
+    }
+
     if (Object.keys(req.body).length === 0) {
         res.status(400);
         return next(new Error('No update data provided.'));

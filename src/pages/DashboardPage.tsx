@@ -1,27 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PageContainer from '@/components/PageContainer';
-import DashboardCard from '@/components/DashboardCard';
-import DashboardCharts from '@/components/DashboardCharts';
-import InteractiveTable from '@/components/InteractiveTable';
-import StatsCard from '@/components/StatsCard';
-import Modal from '@/components/Modal'; 
-import ErrorMessage from '@/components/ErrorMessage';
-import { DashboardMetric, WorkflowMetric, AlertSeverity } from '@/types';
-import { AiIcon, CheckBadgeIcon, TrendingUpIcon } from '@/constants';
-import { 
+import {
   ClockIcon,
   ChartBarIcon,
   CogIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
-import { scheduledAiService, InsightsSummary } from '@/services/scheduledAiService';
-import { dashboardService } from '@/services/dashboardService';
-import { alertingService } from '@/services/alertingService';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import DashboardCard from '@/components/DashboardCard';
+import DashboardCharts from '@/components/DashboardCharts';
+import ErrorMessage from '@/components/ErrorMessage';
 import LoadingSpinner from '@/components/icons/LoadingSpinner';
-import { inventoryService } from '@/services/inventoryService';
+import InteractiveTable from '@/components/InteractiveTable';
+import Modal from '@/components/Modal'; 
+import PageContainer from '@/components/PageContainer';
+import StatsCard from '@/components/StatsCard';
+import { AiIcon, CheckBadgeIcon, TrendingUpIcon } from '@/constants';
 import { useInventory } from '@/hooks/useInventory';
+import { alertingService } from '@/services/alertingService';
+import { dashboardService } from '@/services/dashboardService';
+import { inventoryService } from '@/services/inventoryService';
+import {
+  scheduledAiService,
+  InsightsSummary,
+} from '@/services/scheduledAiService';
+import { DashboardMetric, WorkflowMetric, AlertSeverity } from '@/types';
 
 // Type definitions for missing interfaces
 interface ItemBelowReorderPoint {
@@ -63,25 +67,35 @@ export const DashboardPage: React.FC = () => {
   const [metrics, setMetrics] = useState<DashboardMetric[]>([]);
   const [workflowMetrics, setWorkflowMetrics] = useState<WorkflowMetric[]>([]);
   const [shipmentData, setShipmentData] = useState<any[]>([]);
-  
-  const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string } | null>(null);
 
-  const [insightsSummary, setInsightsSummary] = useState<InsightsSummary | null>(null);
+  const [infoModalContent, setInfoModalContent] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+
+  const [insightsSummary, setInsightsSummary] =
+    useState<InsightsSummary | null>(null);
   const [isAiInsightsLoading, setIsAiInsightsLoading] = useState(true);
   const [isDashboardLoading, setIsDashboardLoading] = useState(true);
   const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
 
   // New state for enhanced stock analysis
-  const [itemsBelowReorderPoint, setItemsBelowReorderPoint] = useState<ItemBelowReorderPoint[]>([]);
-  const [itemsAtRiskOfStockOut, setItemsAtRiskOfStockOut] = useState<ItemAtRiskOfStockOut[]>([]);
+  const [itemsBelowReorderPoint, setItemsBelowReorderPoint] = useState<
+    ItemBelowReorderPoint[]
+  >([]);
+  const [itemsAtRiskOfStockOut, setItemsAtRiskOfStockOut] = useState<
+    ItemAtRiskOfStockOut[]
+  >([]);
   const [runRate, setRunRate] = useState<RunRateData>({
     weeklyInstalls: 66,
     lastUpdated: new Date().toISOString(),
-    source: 'default'
+    source: 'default',
   });
   const [isStockAnalysisLoading, setIsStockAnalysisLoading] = useState(true);
-  const [stockAnalysisError, setStockAnalysisError] = useState<string | null>(null);
+  const [stockAnalysisError, setStockAnalysisError] = useState<string | null>(
+    null
+  );
   const [showRunRateModal, setShowRunRateModal] = useState(false);
   const [newRunRate, setNewRunRate] = useState<number>(66);
   const [errorItemCount, setErrorItemCount] = useState<number>(0);
@@ -94,25 +108,25 @@ export const DashboardPage: React.FC = () => {
     setIsDashboardLoading(true);
     setDashboardError(null);
     try {
-        const [metricsData, shipmentsChart, workflowData] = await Promise.all([
-            dashboardService.getDashboardMetrics(signal),
-            dashboardService.getShipmentChartData(signal),
-            dashboardService.getWorkflowMetrics(signal),
-        ]);
-        if (!signal.aborted) {
-            setMetrics(metricsData);
-            setShipmentData(shipmentsChart);
-            setWorkflowMetrics(workflowData);
-        }
+      const [metricsData, shipmentsChart, workflowData] = await Promise.all([
+        dashboardService.getDashboardMetrics(signal),
+        dashboardService.getShipmentChartData(signal),
+        dashboardService.getWorkflowMetrics(signal),
+      ]);
+      if (!signal.aborted) {
+        setMetrics(metricsData);
+        setShipmentData(shipmentsChart);
+        setWorkflowMetrics(workflowData);
+      }
     } catch (error: any) {
-        if (error.name !== 'AbortError') {
-          console.error("Failed to fetch dashboard data:", error);
-          setDashboardError(error.message || "Could not load dashboard data.");
-        }
+      if (error.name !== 'AbortError') {
+        console.error('Failed to fetch dashboard data:', error);
+        setDashboardError(error.message || 'Could not load dashboard data.');
+      }
     } finally {
-        if (!signal.aborted) {
-            setIsDashboardLoading(false);
-        }
+      if (!signal.aborted) {
+        setIsDashboardLoading(false);
+      }
     }
   }, []);
 
@@ -128,9 +142,11 @@ export const DashboardPage: React.FC = () => {
       }
     } catch (error: any) {
       if (error.name !== 'AbortError') {
-        console.error("Failed to fetch scheduled AI insights:", error);
-        setAiInsightsError("Could not load weekly AI insights. They are generated every Monday.");
-        
+        console.error('Failed to fetch scheduled AI insights:', error);
+        setAiInsightsError(
+          'Could not load weekly AI insights. They are generated every Monday.'
+        );
+
         // Set empty summary to prevent crashes
         setInsightsSummary({
           stockForecasts: [],
@@ -139,8 +155,8 @@ export const DashboardPage: React.FC = () => {
             totalForecasts: 0,
             criticalAlerts: 0,
             lastUpdated: null,
-            nextUpdate: null
-          }
+            nextUpdate: null,
+          },
         });
       }
     } finally {
@@ -156,7 +172,7 @@ export const DashboardPage: React.FC = () => {
     try {
       const [belowReorderPoint, atRisk] = await Promise.all([
         dashboardService.getItemsBelowReorderPoint(),
-        dashboardService.getItemsAtRiskOfStockOut()
+        dashboardService.getItemsAtRiskOfStockOut(),
       ]);
       if (!signal.aborted) {
         setItemsBelowReorderPoint(belowReorderPoint);
@@ -165,8 +181,10 @@ export const DashboardPage: React.FC = () => {
       }
     } catch (error: any) {
       if (error.name !== 'AbortError') {
-        console.error("Failed to fetch stock analysis data:", error);
-        setStockAnalysisError(error.message || "Could not load stock analysis data.");
+        console.error('Failed to fetch stock analysis data:', error);
+        setStockAnalysisError(
+          error.message || 'Could not load stock analysis data.'
+        );
       }
     } finally {
       if (!signal.aborted) {
@@ -178,10 +196,17 @@ export const DashboardPage: React.FC = () => {
   // Fetch error/incomplete inventory count
   useEffect(() => {
     let isMounted = true;
-    inventoryService.getIncompleteInventoryItems()
-      .then(items => { if (isMounted) setErrorItemCount(items.length); })
-      .catch(() => { if (isMounted) setErrorItemCount(0); });
-    return () => { isMounted = false; };
+    inventoryService
+      .getIncompleteInventoryItems()
+      .then(items => {
+        if (isMounted) setErrorItemCount(items.length);
+      })
+      .catch(() => {
+        if (isMounted) setErrorItemCount(0);
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -197,17 +222,30 @@ export const DashboardPage: React.FC = () => {
     };
   }, [fetchDashboardData, fetchAiInsights, fetchStockAnalysis]);
 
-  const handleInitiateDashboardReorder = (itemName: string, sku: string, quantity: number) => {
-    alertingService.addAlert(
-      AlertSeverity.Info,
-      `Reorder recommended for '${itemName} (SKU: ${sku})'. Recommended Qty: ${quantity} units.`,
-      'AI Reorder Recommendation',
-      '/inventory'
-    ).then(() => {
-        setInfoModalContent({ title: 'Reorder Alert Created', message: `An alert has been sent to the procurement team for item '${itemName}'.` });
-    }).catch((err) => {
-        setInfoModalContent({ title: 'Error', message: `Failed to create reorder alert: ${err.message}` });
-    });
+  const handleInitiateDashboardReorder = (
+    itemName: string,
+    sku: string,
+    quantity: number
+  ) => {
+    alertingService
+      .addAlert(
+        AlertSeverity.Info,
+        `Reorder recommended for '${itemName} (SKU: ${sku})'. Recommended Qty: ${quantity} units.`,
+        'AI Reorder Recommendation',
+        '/inventory'
+      )
+      .then(() => {
+        setInfoModalContent({
+          title: 'Reorder Alert Created',
+          message: `An alert has been sent to the procurement team for item '${itemName}'.`,
+        });
+      })
+      .catch(err => {
+        setInfoModalContent({
+          title: 'Error',
+          message: `Failed to create reorder alert: ${err.message}`,
+        });
+      });
   };
 
   const handleUpdateRunRate = async () => {
@@ -216,17 +254,17 @@ export const DashboardPage: React.FC = () => {
       setRunRate({
         weeklyInstalls: newRunRate,
         lastUpdated: new Date().toISOString(),
-        source: 'manual'
+        source: 'manual',
       });
       setShowRunRateModal(false);
-      setInfoModalContent({ 
-        title: 'Run Rate Updated', 
-        message: `Weekly run rate updated to ${newRunRate} installs per week. Stock-out risk calculations will be recalculated.` 
+      setInfoModalContent({
+        title: 'Run Rate Updated',
+        message: `Weekly run rate updated to ${newRunRate} installs per week. Stock-out risk calculations will be recalculated.`,
       });
     } catch (error: any) {
-      setInfoModalContent({ 
-        title: 'Error', 
-        message: `Failed to update run rate: ${error.message}` 
+      setInfoModalContent({
+        title: 'Error',
+        message: `Failed to update run rate: ${error.message}`,
       });
     }
   };
@@ -242,7 +280,9 @@ export const DashboardPage: React.FC = () => {
       return (
         <div className="flex items-center justify-center h-[calc(100vh-15rem)]">
           <LoadingSpinner className="w-12 h-12 text-primary-500" />
-          <p className="ml-4 text-lg font-medium text-secondary-600 dark:text-secondary-400">Loading Dashboard Data...</p>
+          <p className="ml-4 text-lg font-medium text-secondary-600 dark:text-secondary-400">
+            Loading Dashboard Data...
+          </p>
         </div>
       );
     }
@@ -257,27 +297,33 @@ export const DashboardPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {metrics.slice(0, 4).map((metric, index) => {
             const navigationHandlers = [
-              handleShipmentsClick,  // Active Shipments (index 0)
-              handleInventoryClick,  // Inventory Items (index 1)
-              handleOrdersClick,     // Pending Orders (index 2)
-              handleDispatchClick    // Dispatches Today (index 3)
+              handleShipmentsClick, // Active Shipments (index 0)
+              handleInventoryClick, // Inventory Items (index 1)
+              handleOrdersClick, // Pending Orders (index 2)
+              handleDispatchClick, // Dispatches Today (index 3)
             ];
             // If this is the error reporting card, polish its UI
-            if (metric.title.toLowerCase().includes('error') || metric.title.toLowerCase().includes('incomplete')) {
+            if (
+              metric.title.toLowerCase().includes('error') ||
+              metric.title.toLowerCase().includes('incomplete')
+            ) {
               metric.value = errorItemCount;
               metric.icon = ExclamationTriangleIcon;
-              metric.description = 'Inventory Items with Errors: Items missing SKU, reorder point, or safety stock. Click to review and fix.';
+              metric.description =
+                'Inventory Items with Errors: Items missing SKU, reorder point, or safety stock. Click to review and fix.';
             }
             // Debug: For Inventory Items card, show both backend and frontend count, and force value to frontend count
             if (metric.title.toLowerCase().includes('inventory')) {
-              const inStockCount = Array.isArray(inventory) ? inventory.filter(item => item.quantity > 0).length : 0;
+              const inStockCount = Array.isArray(inventory)
+                ? inventory.filter(item => item.quantity > 0).length
+                : 0;
               metric.value = inStockCount;
               metric.description = `Total in-stock SKUs: ${inStockCount}`;
             }
             return (
-              <DashboardCard 
-                key={metric.title} 
-                metric={metric} 
+              <DashboardCard
+                key={metric.title}
+                metric={metric}
                 onClick={navigationHandlers[index]}
               />
             );
@@ -296,7 +342,7 @@ export const DashboardPage: React.FC = () => {
             trend={{
               value: 12,
               isPositive: false,
-              label: "vs last week"
+              label: 'vs last week',
             }}
           />
           <StatsCard
@@ -309,19 +355,26 @@ export const DashboardPage: React.FC = () => {
             trend={{
               value: 8,
               isPositive: true,
-              label: "vs last week"
+              label: 'vs last week',
             }}
           />
           <StatsCard
             title="AI Predictions"
             value={insightsSummary?.summary.totalForecasts || 0}
-            subtitle={aiInsightsError ? "Weekly insights unavailable" : "Weekly forecasts"}
+            subtitle={
+              aiInsightsError
+                ? 'Weekly insights unavailable'
+                : 'Weekly forecasts'
+            }
             icon={AiIcon}
-            color={aiInsightsError ? "yellow" : "purple"}
-            onClick={() => setInfoModalContent({ 
-              title: 'AI Insights', 
-              message: 'AI insights are generated weekly every Monday. Check back for the latest predictions and recommendations.' 
-            })}
+            color={aiInsightsError ? 'yellow' : 'purple'}
+            onClick={() =>
+              setInfoModalContent({
+                title: 'AI Insights',
+                message:
+                  'AI insights are generated weekly every Monday. Check back for the latest predictions and recommendations.',
+              })
+            }
           />
           <StatsCard
             title="System Health"
@@ -329,18 +382,21 @@ export const DashboardPage: React.FC = () => {
             subtitle="All systems operational"
             icon={CheckCircleIcon}
             color="blue"
-            onClick={() => setInfoModalContent({ 
-              title: 'System Health', 
-              message: 'All systems are operating normally. No critical issues detected.' 
-            })}
+            onClick={() =>
+              setInfoModalContent({
+                title: 'System Health',
+                message:
+                  'All systems are operating normally. No critical issues detected.',
+              })
+            }
             trend={{
               value: 2,
               isPositive: true,
-              label: "vs last week"
+              label: 'vs last week',
             }}
           />
         </div>
-        
+
         {/* Interactive Charts Section */}
         <div className="mb-8">
           <DashboardCharts
@@ -359,7 +415,9 @@ export const DashboardPage: React.FC = () => {
       return (
         <div className="flex items-center justify-center py-8">
           <LoadingSpinner className="w-8 h-8 text-primary-500" />
-          <p className="ml-2 text-secondary-600 dark:text-secondary-400">Loading stock analysis...</p>
+          <p className="ml-2 text-secondary-600 dark:text-secondary-400">
+            Loading stock analysis...
+          </p>
         </div>
       );
     }
@@ -375,20 +433,24 @@ export const DashboardPage: React.FC = () => {
         header: 'Item',
         render: (item: ItemBelowReorderPoint) => (
           <div>
-            <div className="text-sm font-medium text-secondary-900 dark:text-secondary-100">{item.itemName}</div>
-            <div className="text-sm text-secondary-500 dark:text-secondary-400">{item.sku}</div>
+            <div className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
+              {item.itemName}
+            </div>
+            <div className="text-sm text-secondary-500 dark:text-secondary-400">
+              {item.sku}
+            </div>
           </div>
         ),
       },
-      { 
-        key: 'currentQuantity', 
+      {
+        key: 'currentQuantity',
         header: 'Current Qty',
-        render: (item: ItemBelowReorderPoint) => item.currentQuantity || 0
+        render: (item: ItemBelowReorderPoint) => item.currentQuantity || 0,
       },
-      { 
-        key: 'reorderPoint', 
+      {
+        key: 'reorderPoint',
         header: 'Reorder Point',
-        render: (item: ItemBelowReorderPoint) => item.reorderPoint || 0
+        render: (item: ItemBelowReorderPoint) => item.reorderPoint || 0,
       },
       {
         key: 'shortfall',
@@ -399,10 +461,10 @@ export const DashboardPage: React.FC = () => {
           </span>
         ),
       },
-      { 
-        key: 'location', 
+      {
+        key: 'location',
         header: 'Location',
-        render: (item: ItemBelowReorderPoint) => item.location || 'N/A'
+        render: (item: ItemBelowReorderPoint) => item.location || 'N/A',
       },
     ];
 
@@ -413,14 +475,16 @@ export const DashboardPage: React.FC = () => {
         header: 'Item Name',
         render: (item: ItemAtRiskOfStockOut) => (
           <div>
-            <div className="text-sm font-medium text-secondary-900 dark:text-secondary-100">{item.itemName}</div>
+            <div className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
+              {item.itemName}
+            </div>
           </div>
         ),
       },
       {
         key: 'currentQuantity',
         header: 'Current Qty',
-        render: (item: ItemAtRiskOfStockOut) => item.currentQuantity || 0
+        render: (item: ItemAtRiskOfStockOut) => item.currentQuantity || 0,
       },
       {
         key: 'sixMonthDemand',
@@ -431,7 +495,8 @@ export const DashboardPage: React.FC = () => {
               {(item.sixMonthDemand || 0).toLocaleString()}
             </div>
             <div className="text-xs text-secondary-500 dark:text-secondary-400">
-              ({(item.demandRange?.min || 0).toLocaleString()}–{(item.demandRange?.max || 0).toLocaleString()})
+              ({(item.demandRange?.min || 0).toLocaleString()}–
+              {(item.demandRange?.max || 0).toLocaleString()})
             </div>
           </div>
         ),
@@ -473,15 +538,25 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Weekly Installs</p>
-              <p className="text-2xl font-bold text-blue-800 dark:text-blue-200">{runRate.weeklyInstalls}</p>
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                Weekly Installs
+              </p>
+              <p className="text-2xl font-bold text-blue-800 dark:text-blue-200">
+                {runRate.weeklyInstalls}
+              </p>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
-              <p className="text-sm font-medium text-green-600 dark:text-green-400">Source</p>
-              <p className="text-lg font-semibold text-green-800 dark:text-green-200 capitalize">{runRate.source}</p>
+              <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                Source
+              </p>
+              <p className="text-lg font-semibold text-green-800 dark:text-green-200 capitalize">
+                {runRate.source}
+              </p>
             </div>
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-              <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Last Updated</p>
+              <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                Last Updated
+              </p>
               <p className="text-sm text-purple-800 dark:text-purple-200">
                 {new Date(runRate.lastUpdated).toLocaleDateString()}
               </p>
@@ -497,7 +572,9 @@ export const DashboardPage: React.FC = () => {
             title="Items Below Reorder Point"
             icon={ExclamationTriangleIcon}
             emptyMessage="No items are currently below their reorder point."
-            onRowClick={item => { if (item === null) setShowBelowReorderModal(true); }}
+            onRowClick={item => {
+              if (item === null) setShowBelowReorderModal(true);
+            }}
             maxRows={5}
           />
 
@@ -507,12 +584,19 @@ export const DashboardPage: React.FC = () => {
             title="Items at Risk of Stock-Out (6 Months)"
             icon={ClockIcon}
             emptyMessage="No items are at risk of stock-out within the next 6 months."
-            onRowClick={item => { if (item === null) setShowAtRiskModal(true); }}
+            onRowClick={item => {
+              if (item === null) setShowAtRiskModal(true);
+            }}
             maxRows={5}
           />
         </div>
         {/* Modals for View All */}
-        <Modal isOpen={showBelowReorderModal} onClose={() => setShowBelowReorderModal(false)} title="All Items Below Reorder Point" size="2xl">
+        <Modal
+          isOpen={showBelowReorderModal}
+          onClose={() => setShowBelowReorderModal(false)}
+          title="All Items Below Reorder Point"
+          size="2xl"
+        >
           <div className="max-h-[70vh] overflow-y-auto max-w-5xl mx-auto">
             <InteractiveTable
               data={itemsBelowReorderPoint}
@@ -525,7 +609,12 @@ export const DashboardPage: React.FC = () => {
             />
           </div>
         </Modal>
-        <Modal isOpen={showAtRiskModal} onClose={() => setShowAtRiskModal(false)} title="All Items at Risk of Stock-Out (6 Months)" size="2xl">
+        <Modal
+          isOpen={showAtRiskModal}
+          onClose={() => setShowAtRiskModal(false)}
+          title="All Items at Risk of Stock-Out (6 Months)"
+          size="2xl"
+        >
           <div className="max-h-[70vh] overflow-y-auto">
             <InteractiveTable
               data={itemsAtRiskOfStockOut}
@@ -544,74 +633,96 @@ export const DashboardPage: React.FC = () => {
 
   const renderAiInsights = () => {
     if (isAiInsightsLoading) {
-        return (
-            <div className="flex items-center justify-center py-8">
-                <LoadingSpinner className="w-8 h-8 text-primary-500" />
-                <p className="ml-2 text-secondary-600 dark:text-secondary-400">Loading AI insights...</p>
-            </div>
-        );
+      return (
+        <div className="flex items-center justify-center py-8">
+          <LoadingSpinner className="w-8 h-8 text-primary-500" />
+          <p className="ml-2 text-secondary-600 dark:text-secondary-400">
+            Loading AI insights...
+          </p>
+        </div>
+      );
     }
 
     if (aiInsightsError) {
-        return <ErrorMessage message={aiInsightsError} />;
+      return <ErrorMessage message={aiInsightsError} />;
     }
 
     return (
-        <div className="space-y-4">
-            <p className="text-sm text-secondary-600 dark:text-secondary-400">
-                VisionBot analysis of current warehouse operations:
-            </p>
-            <div className="space-y-3">
-                {insightsSummary?.stockForecasts && insightsSummary.stockForecasts.length > 0 ? insightsSummary.stockForecasts.map((forecast) => (
-                    <div key={forecast.sku} className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:shadow-md transition-all duration-200">
-                        <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-                            <div className="flex-1">
-                                <div className="flex items-center mb-2">
-                                    <span className="font-semibold text-yellow-600 dark:text-yellow-400 mr-2">Forecasting:</span>
-                                    <span className="text-sm text-secondary-600 dark:text-secondary-400">
-                                        Potential stock-out for '{forecast.itemName} (SKU: {forecast.sku})' in ~{forecast.predictedStockOutDays} days
-                                    </span>
-                                </div>
-                                <div className="text-sm text-secondary-500 dark:text-secondary-400">
-                                    Confidence: {(forecast.confidence * 100).toFixed(0)}% | Current: {forecast.currentStock} | 
-                                    Recommended reorder: {forecast.recommendedReorderQty} units
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => handleInitiateDashboardReorder(forecast.itemName, forecast.sku, forecast.recommendedReorderQty)}
-                                className="flex-shrink-0 items-center text-xs bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-3 py-1.5 rounded-md shadow hover:shadow-md transition-all duration-200"
-                            >
-                                <CheckBadgeIcon className="h-4 w-4 mr-1.5 inline-block" /> Initiate Reorder
-                            </button>
-                        </div>
+      <div className="space-y-4">
+        <p className="text-sm text-secondary-600 dark:text-secondary-400">
+          VisionBot analysis of current warehouse operations:
+        </p>
+        <div className="space-y-3">
+          {insightsSummary?.stockForecasts &&
+          insightsSummary.stockForecasts.length > 0 ? (
+            insightsSummary.stockForecasts.map(forecast => (
+              <div
+                key={forecast.sku}
+                className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:shadow-md transition-all duration-200"
+              >
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center mb-2">
+                      <span className="font-semibold text-yellow-600 dark:text-yellow-400 mr-2">
+                        Forecasting:
+                      </span>
+                      <span className="text-sm text-secondary-600 dark:text-secondary-400">
+                        Potential stock-out for '{forecast.itemName} (SKU:{' '}
+                        {forecast.sku})' in ~{forecast.predictedStockOutDays}{' '}
+                        days
+                      </span>
                     </div>
-                )) : (
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                        <div className="flex items-center">
-                            <span className="font-semibold text-blue-600 dark:text-blue-400 mr-2">AI Status:</span>
-                            <span className="text-secondary-600 dark:text-secondary-400">
-                                {aiInsightsError ? 
-                                    "Using fallback predictions while AI quota resets." : 
-                                    "No critical stock-out risks detected at this moment."
-                                }
-                            </span>
-                        </div>
-                        {aiInsightsError && (
-                            <div className="mt-2 text-xs text-yellow-600 dark:text-yellow-400">
-                                ⚠️ Using fallback predictions due to AI quota limits. Full AI insights will resume when quota resets.
-                            </div>
-                        )}
+                    <div className="text-sm text-secondary-500 dark:text-secondary-400">
+                      Confidence: {(forecast.confidence * 100).toFixed(0)}% |
+                      Current: {forecast.currentStock} | Recommended reorder:{' '}
+                      {forecast.recommendedReorderQty} units
                     </div>
-                )}
+                  </div>
+                  <button
+                    onClick={() =>
+                      handleInitiateDashboardReorder(
+                        forecast.itemName,
+                        forecast.sku,
+                        forecast.recommendedReorderQty
+                      )
+                    }
+                    className="flex-shrink-0 items-center text-xs bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-3 py-1.5 rounded-md shadow hover:shadow-md transition-all duration-200"
+                  >
+                    <CheckBadgeIcon className="h-4 w-4 mr-1.5 inline-block" />{' '}
+                    Initiate Reorder
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+              <div className="flex items-center">
+                <span className="font-semibold text-blue-600 dark:text-blue-400 mr-2">
+                  AI Status:
+                </span>
+                <span className="text-secondary-600 dark:text-secondary-400">
+                  {aiInsightsError
+                    ? 'Using fallback predictions while AI quota resets.'
+                    : 'No critical stock-out risks detected at this moment.'}
+                </span>
+              </div>
+              {aiInsightsError && (
+                <div className="mt-2 text-xs text-yellow-600 dark:text-yellow-400">
+                  ⚠️ Using fallback predictions due to AI quota limits. Full AI
+                  insights will resume when quota resets.
+                </div>
+              )}
             </div>
+          )}
         </div>
+      </div>
     );
   };
 
   return (
-          <PageContainer title="Shipping, Inventory & Warehouse Management Dashboard">
+    <PageContainer title="Shipping, Inventory & Warehouse Management Dashboard">
       {renderDashboardContent()}
-      
+
       {/* Enhanced Stock Analysis Section */}
       <div className="bg-white dark:bg-secondary-800 p-6 rounded-xl shadow-lg mb-8">
         <h3 className="text-xl font-semibold text-secondary-800 dark:text-secondary-200 mb-4 flex items-center">
@@ -620,29 +731,38 @@ export const DashboardPage: React.FC = () => {
         </h3>
         {renderStockAnalysis()}
       </div>
-      
+
       <div className="bg-white dark:bg-secondary-800 p-6 rounded-xl shadow-lg mb-8">
-          <h3 className="text-xl font-semibold text-secondary-800 dark:text-secondary-200 mb-2 flex items-center">
-            <AiIcon className="h-6 w-6 mr-2 text-purple-500" /> AI-Powered Insights
-          </h3>
-          {renderAiInsights()}
+        <h3 className="text-xl font-semibold text-secondary-800 dark:text-secondary-200 mb-2 flex items-center">
+          <AiIcon className="h-6 w-6 mr-2 text-purple-500" /> AI-Powered
+          Insights
+        </h3>
+        {renderAiInsights()}
       </div>
-      
+
       {/* Run Rate Update Modal */}
-      <Modal isOpen={showRunRateModal} onClose={() => setShowRunRateModal(false)} title="Update Run Rate">
+      <Modal
+        isOpen={showRunRateModal}
+        onClose={() => setShowRunRateModal(false)}
+        title="Update Run Rate"
+      >
         <div className="space-y-4">
           <p className="text-secondary-700 dark:text-secondary-300">
-            Update the weekly installation rate to recalculate stock-out risk projections.
+            Update the weekly installation rate to recalculate stock-out risk
+            projections.
           </p>
           <div>
-            <label htmlFor="runRate" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+            <label
+              htmlFor="runRate"
+              className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2"
+            >
               Weekly Installs
             </label>
             <input
               type="number"
               id="runRate"
               value={newRunRate}
-              onChange={(e) => setNewRunRate(Number(e.target.value))}
+              onChange={e => setNewRunRate(Number(e.target.value))}
               className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-secondary-700 dark:text-secondary-100"
               placeholder="66"
               min="1"
@@ -664,11 +784,22 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
       </Modal>
-      
-      <Modal isOpen={!!infoModalContent} onClose={() => setInfoModalContent(null)} title={infoModalContent?.title || ''}>
-        <p className="text-secondary-700 dark:text-secondary-300">{infoModalContent?.message}</p>
-        <div className="flex justify-end pt-4"> 
-          <button onClick={() => setInfoModalContent(null)} className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm">OK</button> 
+
+      <Modal
+        isOpen={!!infoModalContent}
+        onClose={() => setInfoModalContent(null)}
+        title={infoModalContent?.title || ''}
+      >
+        <p className="text-secondary-700 dark:text-secondary-300">
+          {infoModalContent?.message}
+        </p>
+        <div className="flex justify-end pt-4">
+          <button
+            onClick={() => setInfoModalContent(null)}
+            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm"
+          >
+            OK
+          </button>
         </div>
       </Modal>
     </PageContainer>

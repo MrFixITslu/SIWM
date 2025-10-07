@@ -1,4 +1,4 @@
-export const APP_NAME = "Vision79 SIWM";
+export const APP_NAME = 'Vision79 SIWM';
 
 export const NOTIFICATION_TYPES = {
   SUCCESS: 'success',

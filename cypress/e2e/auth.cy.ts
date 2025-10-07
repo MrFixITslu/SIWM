@@ -33,8 +33,8 @@ describe('Authentication Flow', () => {
         email: 'test@example.com',
         role: 'admin',
         permissions: ['dashboard', 'inventory', 'users'],
-        token: 'mock-jwt-token'
-      }
+        token: 'mock-jwt-token',
+      },
     }).as('loginRequest');
 
     cy.get('input[name="email"]').type('test@example.com');
@@ -51,8 +51,8 @@ describe('Authentication Flow', () => {
     cy.intercept('POST', '/api/v1/auth/login', {
       statusCode: 401,
       body: {
-        message: 'Invalid email or password'
-      }
+        message: 'Invalid email or password',
+      },
     }).as('loginRequest');
 
     cy.get('input[name="email"]').type('wrong@example.com');
@@ -60,7 +60,10 @@ describe('Authentication Flow', () => {
     cy.get('button[type="submit"]').click();
 
     cy.wait('@loginRequest');
-    cy.get('[data-testid="error-message"]').should('contain', 'Invalid email or password');
+    cy.get('[data-testid="error-message"]').should(
+      'contain',
+      'Invalid email or password'
+    );
   });
 
   it('should navigate to registration page', () => {
@@ -78,8 +81,8 @@ describe('Authentication Flow', () => {
         email: 'newuser@example.com',
         role: 'Requester',
         permissions: ['dashboard'],
-        token: 'mock-jwt-token'
-      }
+        token: 'mock-jwt-token',
+      },
     }).as('registerRequest');
 
     cy.visit('/register');
@@ -94,7 +97,7 @@ describe('Authentication Flow', () => {
 
   it('should handle network errors gracefully', () => {
     cy.intercept('POST', '/api/v1/auth/login', {
-      forceNetworkError: true
+      forceNetworkError: true,
     }).as('networkError');
 
     cy.get('input[name="email"]').type('test@example.com');
@@ -107,7 +110,7 @@ describe('Authentication Flow', () => {
   it('should maintain focus management for accessibility', () => {
     cy.get('input[name="email"]').focus();
     cy.focused().should('have.attr', 'name', 'email');
-    
+
     cy.get('input[name="password"]').focus();
     cy.focused().should('have.attr', 'name', 'password');
   });
@@ -116,8 +119,8 @@ describe('Authentication Flow', () => {
     cy.get('input[name="email"]').type('test@example.com');
     cy.get('input[name="password"]').type('password123');
     cy.get('input[name="password"]').type('{enter}');
-    
+
     // Should attempt to submit the form
     cy.get('button[type="submit"]').should('be.focused');
   });
-}); 
+});

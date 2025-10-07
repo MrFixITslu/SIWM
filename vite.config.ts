@@ -20,7 +20,7 @@ export default defineConfig({
     https: false,
     port: 5176,
     host: '0.0.0.0', // Listen on all network interfaces for scalability
-    strictPort: true, // Fail if port is in use instead of picking random port
+    strictPort: false, // Allow fallback ports to avoid conflicts
     // Enable HMR with better performance
     hmr: {
       port: 5177,

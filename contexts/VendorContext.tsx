@@ -1,7 +1,15 @@
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+  useMemo,
+  useContext,
+} from 'react';
 
-import React, { createContext, useState, useEffect, useCallback, ReactNode, useMemo, useContext } from 'react';
-import { vendorService } from '@/services/vendorService';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { vendorService } from '@/services/vendorService';
 import { Vendor } from '@/types';
 
 interface VendorContextType {
@@ -12,7 +20,9 @@ interface VendorContextType {
 
 const VendorContext = createContext<VendorContextType | undefined>(undefined);
 
-export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const VendorProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +34,7 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const items = await vendorService.getVendors();
       setVendors(items);
     } catch (err: any) {
-      setError(err.message || "Failed to fetch vendor data.");
+      setError(err.message || 'Failed to fetch vendor data.');
     } finally {
       setIsLoading(false);
     }
@@ -40,29 +50,39 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, []);
 
   const handleVendorUpdated = useCallback((updatedVendor: Vendor) => {
-    setVendors(prev => prev.map(item => item.id === updatedVendor.id ? updatedVendor : item));
+    setVendors(prev =>
+      prev.map(item => (item.id === updatedVendor.id ? updatedVendor : item))
+    );
   }, []);
 
   const handleVendorDeleted = useCallback((data: { id: number }) => {
     setVendors(prev => prev.filter(item => item.id !== data.id));
   }, []);
 
-  const realtimeHandlers = useMemo(() => ({
-    'vendor_created': handleVendorCreated,
-    'vendor_updated': handleVendorUpdated,
-    'vendor_deleted': handleVendorDeleted,
-  }), [handleVendorCreated, handleVendorUpdated, handleVendorDeleted]);
+  const realtimeHandlers = useMemo(
+    () => ({
+      vendor_created: handleVendorCreated,
+      vendor_updated: handleVendorUpdated,
+      vendor_deleted: handleVendorDeleted,
+    }),
+    [handleVendorCreated, handleVendorUpdated, handleVendorDeleted]
+  );
 
   useRealtimeUpdates(realtimeHandlers);
   // --- End of real-time updates ---
 
-  const value = useMemo(() => ({
-    vendors,
-    isLoading,
-    error,
-  }), [vendors, isLoading, error]);
+  const value = useMemo(
+    () => ({
+      vendors,
+      isLoading,
+      error,
+    }),
+    [vendors, isLoading, error]
+  );
 
-  return <VendorContext.Provider value={value}>{children}</VendorContext.Provider>;
+  return (
+    <VendorContext.Provider value={value}>{children}</VendorContext.Provider>
+  );
 };
 
 export const useVendor = (): VendorContextType => {

@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+
 import InventoryContext from '@/contexts/InventoryContext';
 
 export const useInventory = () => {

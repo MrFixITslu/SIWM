@@ -7,8 +7,9 @@
 // - Conflict resolution
 // - Data compression for storage efficiency
 
-import { OfflineAction, OfflineStatus, SyncResult } from '@/types';
 import { api } from './apiHelper';
+
+import { OfflineAction, OfflineStatus, SyncResult } from '@/types';
 
 interface CachedData {
   key: string;
@@ -48,23 +49,35 @@ class OfflineService {
         resolve();
       };
 
-      request.onupgradeneeded = (event) => {
+      request.onupgradeneeded = event => {
         const db = (event.target as IDBOpenDBRequest).result;
 
         // Create object stores
         if (!db.objectStoreNames.contains('cachedData')) {
-          const cachedDataStore = db.createObjectStore('cachedData', { keyPath: 'key' });
-          cachedDataStore.createIndex('timestamp', 'timestamp', { unique: false });
+          const cachedDataStore = db.createObjectStore('cachedData', {
+            keyPath: 'key',
+          });
+          cachedDataStore.createIndex('timestamp', 'timestamp', {
+            unique: false,
+          });
         }
 
         if (!db.objectStoreNames.contains('offlineActions')) {
-          const actionsStore = db.createObjectStore('offlineActions', { keyPath: 'id', autoIncrement: true });
+          const actionsStore = db.createObjectStore('offlineActions', {
+            keyPath: 'id',
+            autoIncrement: true,
+          });
           actionsStore.createIndex('status', 'status', { unique: false });
-          actionsStore.createIndex('entityType', 'entityType', { unique: false });
+          actionsStore.createIndex('entityType', 'entityType', {
+            unique: false,
+          });
         }
 
         if (!db.objectStoreNames.contains('syncConflicts')) {
-          db.createObjectStore('syncConflicts', { keyPath: 'id', autoIncrement: true });
+          db.createObjectStore('syncConflicts', {
+            keyPath: 'id',
+            autoIncrement: true,
+          });
         }
       };
     });
@@ -93,7 +106,11 @@ class OfflineService {
   }
 
   // Cache data for offline access
-  async cacheData(key: string, data: any, ttl: number = 24 * 60 * 60 * 1000): Promise<void> {
+  async cacheData(
+    key: string,
+    data: any,
+    ttl: number = 24 * 60 * 60 * 1000
+  ): Promise<void> {
     if (!this.db) return;
 
     const transaction = this.db.transaction(['cachedData'], 'readwrite');
@@ -103,7 +120,7 @@ class OfflineService {
       key,
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     };
 
     await new Promise<void>((resolve, reject) => {
@@ -186,7 +203,9 @@ class OfflineService {
   }
 
   // Queue offline action
-  async queueOfflineAction(action: Omit<OfflineAction, 'id' | 'status' | 'created_at' | 'retry_count'>): Promise<void> {
+  async queueOfflineAction(
+    action: Omit<OfflineAction, 'id' | 'status' | 'created_at' | 'retry_count'>
+  ): Promise<void> {
     if (!this.db) return;
 
     const offlineAction: OfflineAction = {
@@ -194,7 +213,7 @@ class OfflineService {
       id: Date.now(), // Temporary ID
       status: 'pending',
       created_at: new Date().toISOString(),
-      retry_count: 0
+      retry_count: 0,
     };
 
     const transaction = this.db.transaction(['offlineActions'], 'readwrite');
@@ -234,7 +253,7 @@ class OfflineService {
       isOnline: this.isOnline,
       pendingActions: this.pendingActions.length,
       syncInProgress: this.syncInProgress,
-      lastSyncTime: this.getLastSyncTime()
+      lastSyncTime: this.getLastSyncTime(),
     };
   }
 
@@ -257,7 +276,7 @@ class OfflineService {
         success: false,
         syncedActions: 0,
         failedActions: 0,
-        errors: ['Not online']
+        errors: ['Not online'],
       };
     }
 
@@ -265,7 +284,7 @@ class OfflineService {
       success: true,
       syncedActions: 0,
       failedActions: 0,
-      errors: []
+      errors: [],
     };
 
     for (const action of this.pendingActions) {
@@ -275,8 +294,10 @@ class OfflineService {
         results.syncedActions++;
       } catch (error: any) {
         results.failedActions++;
-        results.errors.push(`${action.action_type} ${action.entity_type}: ${error.message}`);
-        
+        results.errors.push(
+          `${action.action_type} ${action.entity_type}: ${error.message}`
+        );
+
         // Increment retry count
         action.retry_count++;
         if (action.retry_count >= 3) {
@@ -334,7 +355,10 @@ class OfflineService {
   }
 
   // Mark action as failed
-  private async markActionFailed(actionId: number, errorMessage: string): Promise<void> {
+  private async markActionFailed(
+    actionId: number,
+    errorMessage: string
+  ): Promise<void> {
     if (!this.db) return;
 
     const transaction = this.db.transaction(['offlineActions'], 'readwrite');
@@ -410,8 +434,11 @@ class OfflineService {
   async clearAllOfflineData(): Promise<void> {
     if (!this.db) return;
 
-    const transaction = this.db.transaction(['cachedData', 'offlineActions', 'syncConflicts'], 'readwrite');
-    
+    const transaction = this.db.transaction(
+      ['cachedData', 'offlineActions', 'syncConflicts'],
+      'readwrite'
+    );
+
     await Promise.all([
       new Promise<void>((resolve, reject) => {
         const request = transaction.objectStore('cachedData').clear();
@@ -427,7 +454,7 @@ class OfflineService {
         const request = transaction.objectStore('syncConflicts').clear();
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
-      })
+      }),
     ]);
 
     this.pendingActions = [];
@@ -440,10 +467,19 @@ class OfflineService {
     conflictsSize: number;
     totalSize: number;
   }> {
-    if (!this.db) return { cachedDataSize: 0, pendingActionsSize: 0, conflictsSize: 0, totalSize: 0 };
+    if (!this.db)
+      return {
+        cachedDataSize: 0,
+        pendingActionsSize: 0,
+        conflictsSize: 0,
+        totalSize: 0,
+      };
 
-    const transaction = this.db.transaction(['cachedData', 'offlineActions', 'syncConflicts'], 'readonly');
-    
+    const transaction = this.db.transaction(
+      ['cachedData', 'offlineActions', 'syncConflicts'],
+      'readonly'
+    );
+
     const [cachedData, pendingActions, conflicts] = await Promise.all([
       new Promise<any[]>((resolve, reject) => {
         const request = transaction.objectStore('cachedData').getAll();
@@ -459,7 +495,7 @@ class OfflineService {
         const request = transaction.objectStore('syncConflicts').getAll();
         request.onsuccess = () => resolve(request.result || []);
         request.onerror = () => reject(request.error);
-      })
+      }),
     ]);
 
     const cachedDataSize = JSON.stringify(cachedData).length;
@@ -471,10 +507,10 @@ class OfflineService {
       cachedDataSize,
       pendingActionsSize,
       conflictsSize,
-      totalSize
+      totalSize,
     };
   }
 }
 
 // Export singleton instance
-export const offlineService = new OfflineService(); 
+export const offlineService = new OfflineService();

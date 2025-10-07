@@ -15,18 +15,15 @@ interface DashboardPerformanceMonitorProps {
   onRefresh: () => void;
 }
 
-export const DashboardPerformanceMonitor: React.FC<DashboardPerformanceMonitorProps> = ({
-  loading,
-  error,
-  lastUpdated,
-  onRefresh
-}) => {
+export const DashboardPerformanceMonitor: React.FC<
+  DashboardPerformanceMonitorProps
+> = ({ loading, error, lastUpdated, onRefresh }) => {
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     loadTime: 0,
     lastUpdate: null,
     cacheHits: 0,
     cacheMisses: 0,
-    errorCount: 0
+    errorCount: 0,
   });
 
   const [showDetails, setShowDetails] = useState(false);
@@ -42,10 +39,10 @@ export const DashboardPerformanceMonitor: React.FC<DashboardPerformanceMonitorPr
     } else if (!loading && prevLoadingRef.current && loadStartTimeRef.current) {
       // Finished loading
       const loadTime = Date.now() - loadStartTimeRef.current;
-      setMetrics(prev => ({ 
-        ...prev, 
+      setMetrics(prev => ({
+        ...prev,
         loadTime: loadTime,
-        lastUpdate: lastUpdated 
+        lastUpdate: lastUpdated,
       }));
       loadStartTimeRef.current = null;
     }
@@ -69,11 +66,16 @@ export const DashboardPerformanceMonitor: React.FC<DashboardPerformanceMonitorPr
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Excellent': return 'text-green-600';
-      case 'Good': return 'text-blue-600';
-      case 'Fair': return 'text-yellow-600';
-      case 'Poor': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'Excellent':
+        return 'text-green-600';
+      case 'Good':
+        return 'text-blue-600';
+      case 'Fair':
+        return 'text-yellow-600';
+      case 'Poor':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
     }
   };
 
@@ -82,16 +84,20 @@ export const DashboardPerformanceMonitor: React.FC<DashboardPerformanceMonitorPr
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`} />
+            <div
+              className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`}
+            />
             <span className="text-sm font-medium">
               {loading ? 'Loading...' : 'Dashboard Status'}
             </span>
           </div>
-          
+
           {metrics.loadTime > 0 && (
             <div className="text-sm text-secondary-600 dark:text-secondary-400">
               Load time: {metrics.loadTime}ms
-              <span className={`ml-2 font-medium ${getStatusColor(getPerformanceStatus())}`}>
+              <span
+                className={`ml-2 font-medium ${getStatusColor(getPerformanceStatus())}`}
+              >
                 ({getPerformanceStatus()})
               </span>
             </div>
@@ -105,7 +111,7 @@ export const DashboardPerformanceMonitor: React.FC<DashboardPerformanceMonitorPr
           >
             {showDetails ? 'Hide' : 'Show'} Details
           </button>
-          
+
           <button
             onClick={onRefresh}
             disabled={loading}
@@ -120,28 +126,40 @@ export const DashboardPerformanceMonitor: React.FC<DashboardPerformanceMonitorPr
         <div className="mt-4 pt-4 border-t border-secondary-200 dark:border-secondary-700">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <div className="font-medium text-secondary-700 dark:text-secondary-300">Last Update</div>
+              <div className="font-medium text-secondary-700 dark:text-secondary-300">
+                Last Update
+              </div>
               <div className="text-secondary-600 dark:text-secondary-400">
-                {metrics.lastUpdate ? metrics.lastUpdate.toLocaleTimeString() : 'Never'}
+                {metrics.lastUpdate
+                  ? metrics.lastUpdate.toLocaleTimeString()
+                  : 'Never'}
               </div>
             </div>
-            
+
             <div>
-              <div className="font-medium text-secondary-700 dark:text-secondary-300">Load Time</div>
+              <div className="font-medium text-secondary-700 dark:text-secondary-300">
+                Load Time
+              </div>
               <div className="text-secondary-600 dark:text-secondary-400">
                 {metrics.loadTime}ms
               </div>
             </div>
-            
+
             <div>
-              <div className="font-medium text-secondary-700 dark:text-secondary-300">Performance</div>
-              <div className={`font-medium ${getStatusColor(getPerformanceStatus())}`}>
+              <div className="font-medium text-secondary-700 dark:text-secondary-300">
+                Performance
+              </div>
+              <div
+                className={`font-medium ${getStatusColor(getPerformanceStatus())}`}
+              >
                 {getPerformanceStatus()}
               </div>
             </div>
-            
+
             <div>
-              <div className="font-medium text-secondary-700 dark:text-secondary-300">Errors</div>
+              <div className="font-medium text-secondary-700 dark:text-secondary-300">
+                Errors
+              </div>
               <div className="text-secondary-600 dark:text-secondary-400">
                 {metrics.errorCount}
               </div>
@@ -150,12 +168,16 @@ export const DashboardPerformanceMonitor: React.FC<DashboardPerformanceMonitorPr
 
           {error && (
             <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-              <div className="text-sm font-medium text-red-800 dark:text-red-200">Error</div>
-              <div className="text-sm text-red-600 dark:text-red-300">{error}</div>
+              <div className="text-sm font-medium text-red-800 dark:text-red-200">
+                Error
+              </div>
+              <div className="text-sm text-red-600 dark:text-red-300">
+                {error}
+              </div>
             </div>
           )}
         </div>
       )}
     </div>
   );
-}; 
+};

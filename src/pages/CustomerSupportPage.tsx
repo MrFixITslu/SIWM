@@ -1,27 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import PageContainer from '@/components/PageContainer';
-import Table from '@/components/Table';
-import Modal from '@/components/Modal';
+
 import ErrorMessage from '@/components/ErrorMessage';
 import LoadingSpinner from '@/components/icons/LoadingSpinner';
-import { SupportTicket, ColumnDefinition } from '@/types';
+import Modal from '@/components/Modal';
+import PageContainer from '@/components/PageContainer';
+import Table from '@/components/Table';
+import { PlusIcon, ChatIcon } from '@/constants';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  PlusIcon, 
-  ChatIcon
-} from '@/constants';
+import { SupportTicket, ColumnDefinition } from '@/types';
 
 interface CustomerSupportPageProps {}
 
 const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
   const { user } = useAuth();
-  
+
   // State for tickets
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(
+    null
+  );
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [isResponseModalOpen, setIsResponseModalOpen] = useState(false);
-  
+
   // State for new ticket
   const [newTicket, setNewTicket] = useState({
     title: '',
@@ -30,13 +30,13 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
     priority: 'medium' as const,
     warehouse_id: undefined as number | undefined,
     related_order_id: undefined as number | undefined,
-    related_shipment_id: undefined as number | undefined
+    related_shipment_id: undefined as number | undefined,
   });
 
   // State for new response
   const [newResponse, setNewResponse] = useState({
     message: '',
-    is_internal: false
+    is_internal: false,
   });
 
   // Loading and error states
@@ -69,7 +69,7 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
           created_by: 1,
           warehouse_id: 1,
           created_at: '2024-01-15T10:30:00Z',
-          updated_at: '2024-01-15T10:30:00Z'
+          updated_at: '2024-01-15T10:30:00Z',
         },
         {
           id: 2,
@@ -83,8 +83,8 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
           created_by: 1,
           related_shipment_id: 123,
           created_at: '2024-01-14T14:20:00Z',
-          updated_at: '2024-01-15T09:15:00Z'
-        }
+          updated_at: '2024-01-15T09:15:00Z',
+        },
       ];
       setTickets(mockTickets);
     } catch (error: any) {
@@ -100,12 +100,16 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
 
   // Filter tickets
   const filteredTickets = tickets.filter(ticket => {
-    const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
-    const matchesCategory = categoryFilter === 'all' || ticket.category === categoryFilter;
-    const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.ticket_number.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesStatus =
+      statusFilter === 'all' || ticket.status === statusFilter;
+    const matchesPriority =
+      priorityFilter === 'all' || ticket.priority === priorityFilter;
+    const matchesCategory =
+      categoryFilter === 'all' || ticket.category === categoryFilter;
+    const matchesSearch =
+      ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.ticket_number.toLowerCase().includes(searchTerm.toLowerCase());
+
     return matchesStatus && matchesPriority && matchesCategory && matchesSearch;
   });
 
@@ -128,7 +132,7 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
         related_order_id: newTicket.related_order_id,
         related_shipment_id: newTicket.related_shipment_id,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       setTickets(prev => [newTicketData, ...prev]);
@@ -140,7 +144,7 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
         priority: 'medium',
         warehouse_id: undefined,
         related_order_id: undefined,
-        related_shipment_id: undefined
+        related_shipment_id: undefined,
       });
     } catch (error: any) {
       setError(error.message || 'Failed to create ticket');
@@ -152,7 +156,7 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
   // Handle add response
   const handleAddResponse = useCallback(async () => {
     if (!selectedTicket) return;
-    
+
     setIsSaving(true);
     setError(null);
     try {
@@ -170,10 +174,12 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
       const updatedTicket = {
         ...selectedTicket,
         status: newResponse.is_internal ? selectedTicket.status : 'in_progress',
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
-      setTickets(prev => prev.map(t => t.id === selectedTicket.id ? updatedTicket : t));
+      setTickets(prev =>
+        prev.map(t => (t.id === selectedTicket.id ? updatedTicket : t))
+      );
       setIsResponseModalOpen(false);
       setNewResponse({ message: '', is_internal: false });
     } catch (error: any) {
@@ -186,22 +192,32 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
   // Get priority color
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical': return 'text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-200';
-      case 'high': return 'text-orange-600 bg-orange-100 dark:bg-orange-900 dark:text-orange-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'low': return 'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-200';
-      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900 dark:text-gray-200';
+      case 'critical':
+        return 'text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-200';
+      case 'high':
+        return 'text-orange-600 bg-orange-100 dark:bg-orange-900 dark:text-orange-200';
+      case 'medium':
+        return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'low':
+        return 'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-200';
+      default:
+        return 'text-gray-600 bg-gray-100 dark:bg-gray-900 dark:text-gray-200';
     }
   };
 
   // Get status color
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-200';
-      case 'in_progress': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'resolved': return 'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-200';
-      case 'closed': return 'text-gray-600 bg-gray-100 dark:bg-gray-900 dark:text-gray-200';
-      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900 dark:text-gray-200';
+      case 'open':
+        return 'text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-200';
+      case 'in_progress':
+        return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'resolved':
+        return 'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-200';
+      case 'closed':
+        return 'text-gray-600 bg-gray-100 dark:bg-gray-900 dark:text-gray-200';
+      default:
+        return 'text-gray-600 bg-gray-100 dark:bg-gray-900 dark:text-gray-200';
     }
   };
 
@@ -209,30 +225,35 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
   const columns: ColumnDefinition<SupportTicket, keyof SupportTicket>[] = [
     { key: 'ticket_number', header: 'Ticket #' },
     { key: 'title', header: 'Title' },
-    { 
-      key: 'priority', 
+    {
+      key: 'priority',
       header: 'Priority',
       render: (ticket: SupportTicket) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}
+        >
           {ticket.priority}
         </span>
-      )
+      ),
     },
-    { 
-      key: 'status', 
+    {
+      key: 'status',
       header: 'Status',
       render: (ticket: SupportTicket) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}
+        >
           {ticket.status.replace('_', ' ')}
         </span>
-      )
+      ),
     },
     { key: 'category', header: 'Category' },
-    { 
-      key: 'created_at', 
+    {
+      key: 'created_at',
       header: 'Created',
-      render: (ticket: SupportTicket) => new Date(ticket.created_at).toLocaleDateString()
-    }
+      render: (ticket: SupportTicket) =>
+        new Date(ticket.created_at).toLocaleDateString(),
+    },
   ];
 
   if (isLoading) {
@@ -247,7 +268,7 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
   }
 
   return (
-    <PageContainer 
+    <PageContainer
       title="Customer Support"
       actions={
         <button
@@ -270,7 +291,7 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
             </label>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={e => setStatusFilter(e.target.value)}
               className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
               title="Select support topic"
             >
@@ -288,7 +309,7 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
             </label>
             <select
               value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
+              onChange={e => setPriorityFilter(e.target.value)}
               className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
               title="Select support topic"
             >
@@ -306,7 +327,7 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
             </label>
             <select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
+              onChange={e => setCategoryFilter(e.target.value)}
               className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
               title="Select support topic"
             >
@@ -327,7 +348,7 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
               type="text"
               placeholder="Search tickets..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
             />
           </div>
@@ -369,7 +390,9 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
             <input
               type="text"
               value={newTicket.title}
-              onChange={(e) => setNewTicket(prev => ({ ...prev, title: e.target.value }))}
+              onChange={e =>
+                setNewTicket(prev => ({ ...prev, title: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
               placeholder="Brief description of the issue"
             />
@@ -381,7 +404,9 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
             </label>
             <textarea
               value={newTicket.description}
-              onChange={(e) => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
+              onChange={e =>
+                setNewTicket(prev => ({ ...prev, description: e.target.value }))
+              }
               rows={4}
               className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
               placeholder="Detailed description of the issue..."
@@ -395,7 +420,12 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
               </label>
               <select
                 value={newTicket.category}
-                onChange={(e) => setNewTicket(prev => ({ ...prev, category: e.target.value as any }))}
+                onChange={e =>
+                  setNewTicket(prev => ({
+                    ...prev,
+                    category: e.target.value as any,
+                  }))
+                }
                 className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
                 title="Select support topic"
               >
@@ -413,7 +443,12 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
               </label>
               <select
                 value={newTicket.priority}
-                onChange={(e) => setNewTicket(prev => ({ ...prev, priority: e.target.value as any }))}
+                onChange={e =>
+                  setNewTicket(prev => ({
+                    ...prev,
+                    priority: e.target.value as any,
+                  }))
+                }
                 className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
                 title="Select support topic"
               >
@@ -438,10 +473,14 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
               className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50"
               title="Submit support request"
             >
-              {isSaving ? <LoadingSpinner className="w-4 h-4" /> : <>
-                <span className="sr-only">Submit</span>
-                Create Ticket
-              </>}
+              {isSaving ? (
+                <LoadingSpinner className="w-4 h-4" />
+              ) : (
+                <>
+                  <span className="sr-only">Submit</span>
+                  Create Ticket
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -460,7 +499,9 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
             </label>
             <textarea
               value={newResponse.message}
-              onChange={(e) => setNewResponse(prev => ({ ...prev, message: e.target.value }))}
+              onChange={e =>
+                setNewResponse(prev => ({ ...prev, message: e.target.value }))
+              }
               rows={4}
               className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
               placeholder="Enter your response..."
@@ -472,10 +513,18 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
               type="checkbox"
               id="internal-note"
               checked={newResponse.is_internal}
-              onChange={(e) => setNewResponse(prev => ({ ...prev, is_internal: e.target.checked }))}
+              onChange={e =>
+                setNewResponse(prev => ({
+                  ...prev,
+                  is_internal: e.target.checked,
+                }))
+              }
               className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
             />
-            <label htmlFor="internal-note" className="ml-2 text-sm text-secondary-700 dark:text-secondary-300">
+            <label
+              htmlFor="internal-note"
+              className="ml-2 text-sm text-secondary-700 dark:text-secondary-300"
+            >
               Internal note (not visible to customer)
             </label>
           </div>
@@ -492,7 +541,11 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
               disabled={isSaving || !newResponse.message}
               className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50"
             >
-              {isSaving ? <LoadingSpinner className="w-4 h-4" /> : 'Add Response'}
+              {isSaving ? (
+                <LoadingSpinner className="w-4 h-4" />
+              ) : (
+                'Add Response'
+              )}
             </button>
           </div>
         </div>
@@ -501,4 +554,4 @@ const CustomerSupportPage: React.FC<CustomerSupportPageProps> = () => {
   );
 };
 
-export default CustomerSupportPage; 
+export default CustomerSupportPage;

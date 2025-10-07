@@ -1,7 +1,7 @@
-
 // services/asnService.ts
-import { ASN, ShipmentFees, FeeStatus, ReceivedItem } from '@/types';
 import { api } from './apiHelper';
+
+import { ASN, ShipmentFees, FeeStatus, ReceivedItem } from '@/types';
 
 export const asnService = {
   getASNs: (): Promise<ASN[]> => {
@@ -12,7 +12,12 @@ export const asnService = {
     return api.get(`/asns/${id}`);
   },
 
-  createASN: (asnData: Omit<ASN, 'id' | 'status'> & { status?: ASN['status'], items?: any[] }): Promise<ASN> => {
+  createASN: (
+    asnData: Omit<ASN, 'id' | 'status'> & {
+      status?: ASN['status'];
+      items?: any[];
+    }
+  ): Promise<ASN> => {
     const payload = { ...asnData, status: asnData.status || 'On Time' };
     return api.post('/asns', payload);
   },
@@ -29,7 +34,10 @@ export const asnService = {
     return api.post(`/asns/${id}/submit-fees`, { fees });
   },
 
-  approveFees: (id: number, feeStatus: FeeStatus.Approved | FeeStatus.Rejected): Promise<ASN> => {
+  approveFees: (
+    id: number,
+    feeStatus: FeeStatus.Approved | FeeStatus.Rejected
+  ): Promise<ASN> => {
     return api.post(`/asns/${id}/approve-fees`, { feeStatus });
   },
 
@@ -41,7 +49,10 @@ export const asnService = {
     return api.postForm(`/asns/${id}/confirm-payment`, formData);
   },
 
-  receiveShipment: (id: number, receivedItems: ReceivedItem[]): Promise<ASN> => {
+  receiveShipment: (
+    id: number,
+    receivedItems: ReceivedItem[]
+  ): Promise<ASN> => {
     return api.post(`/asns/${id}/receive`, { receivedItems });
   },
 };

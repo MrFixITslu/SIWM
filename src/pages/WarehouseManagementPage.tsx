@@ -1,16 +1,23 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import PageContainer from '@/components/PageContainer';
-import Table from '@/components/Table';
-import Modal from '@/components/Modal';
+
 import ConfirmationModal from '@/components/ConfirmationModal';
 import ErrorMessage from '@/components/ErrorMessage';
 import LoadingSpinner from '@/components/icons/LoadingSpinner';
+import Modal from '@/components/Modal';
+import PageContainer from '@/components/PageContainer';
+import Table from '@/components/Table';
+import {
+  PlusIcon,
+  EditIcon,
+  DeleteIcon,
+  BuildingOfficeIcon,
+} from '@/constants';
 import useConfirmationModal from '@/hooks/useConfirmationModal';
-import { Warehouse, ColumnDefinition } from '@/types';
-import { PlusIcon, EditIcon, DeleteIcon, BuildingOfficeIcon } from '@/constants';
 import { warehouseService } from '@/services/warehouseService';
+import { Warehouse, ColumnDefinition } from '@/types';
 
-const TAILWIND_INPUT_CLASSES = "shadow-sm appearance-none border border-secondary-300 bg-white text-secondary-900 rounded-md px-3 py-2 dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm";
+const TAILWIND_INPUT_CLASSES =
+  'shadow-sm appearance-none border border-secondary-300 bg-white text-secondary-900 rounded-md px-3 py-2 dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm';
 
 const WarehouseManagementPage: React.FC = () => {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -19,9 +26,16 @@ const WarehouseManagementPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentWarehouse, setCurrentWarehouse] = useState<Partial<Warehouse>>({});
+  const [currentWarehouse, setCurrentWarehouse] = useState<Partial<Warehouse>>(
+    {}
+  );
 
-  const { isModalOpen: isConfirmDeleteOpen, showConfirmation, handleConfirm, handleClose: handleCloseConfirm } = useConfirmationModal();
+  const {
+    isModalOpen: isConfirmDeleteOpen,
+    showConfirmation,
+    handleConfirm,
+    handleClose: handleCloseConfirm,
+  } = useConfirmationModal();
 
   // Load warehouses on component mount
   useEffect(() => {
@@ -58,7 +72,7 @@ const WarehouseManagementPage: React.FC = () => {
         phone: '',
         email: '',
         timezone: 'UTC',
-        status: 'active'
+        status: 'active',
       });
     }
     setIsModalOpen(true);
@@ -71,7 +85,13 @@ const WarehouseManagementPage: React.FC = () => {
   };
 
   const handleSaveWarehouse = async () => {
-    if (!currentWarehouse.name || !currentWarehouse.code || !currentWarehouse.address || !currentWarehouse.city || !currentWarehouse.state) {
+    if (
+      !currentWarehouse.name ||
+      !currentWarehouse.code ||
+      !currentWarehouse.address ||
+      !currentWarehouse.city ||
+      !currentWarehouse.state
+    ) {
       setError('Warehouse name, code, address, city, and state are required.');
       return;
     }
@@ -81,11 +101,19 @@ const WarehouseManagementPage: React.FC = () => {
 
     try {
       if (currentWarehouse.id) {
-        await warehouseService.updateWarehouse(currentWarehouse.id, currentWarehouse);
+        await warehouseService.updateWarehouse(
+          currentWarehouse.id,
+          currentWarehouse
+        );
       } else {
-        await warehouseService.createWarehouse(currentWarehouse as Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>);
+        await warehouseService.createWarehouse(
+          currentWarehouse as Omit<
+            Warehouse,
+            'id' | 'created_at' | 'updated_at'
+          >
+        );
       }
-      
+
       await loadWarehouses();
       handleCloseModal();
     } catch (err: any) {
@@ -93,7 +121,8 @@ const WarehouseManagementPage: React.FC = () => {
       let userFriendlyError = 'Failed to save warehouse. Please try again.';
       if (err.message) {
         if (err.message.toLowerCase().includes('failed to fetch')) {
-          userFriendlyError = 'Could not connect to the server to save the warehouse. Please check your network or server status.';
+          userFriendlyError =
+            'Could not connect to the server to save the warehouse. Please check your network or server status.';
         } else {
           userFriendlyError = err.message;
         }
@@ -105,51 +134,61 @@ const WarehouseManagementPage: React.FC = () => {
   };
 
   const handleDeleteWarehouse = (warehouse: Warehouse) => {
-    showConfirmation(async () => {
-      try {
-        await warehouseService.deleteWarehouse(warehouse.id);
-        await loadWarehouses();
-      } catch (err: any) {
-        console.error('Failed to delete warehouse:', err);
-        setError(err.message || 'Failed to delete warehouse');
-      }
-    }, { confirmText: 'Delete Warehouse' });
+    showConfirmation(
+      async () => {
+        try {
+          await warehouseService.deleteWarehouse(warehouse.id);
+          await loadWarehouses();
+        } catch (err: any) {
+          console.error('Failed to delete warehouse:', err);
+          setError(err.message || 'Failed to delete warehouse');
+        }
+      },
+      { confirmText: 'Delete Warehouse' }
+    );
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value, type } = e.target;
     const isNumber = type === 'number';
-    
+
     setCurrentWarehouse(prev => ({
       ...prev,
-      [name]: isNumber ? (value ? parseInt(value) : undefined) : value
+      [name]: isNumber ? (value ? parseInt(value) : undefined) : value,
     }));
   };
 
-  const renderActions = useCallback((warehouse: Warehouse) => (
-    <div className="flex space-x-2">
-      <button 
-        onClick={() => handleOpenModal(warehouse)} 
-        className="p-1 text-primary-500 hover:text-primary-700" 
-        title="Edit"
-      >
-        <EditIcon className="h-5 w-5" />
-      </button>
-      <button 
-        onClick={() => handleDeleteWarehouse(warehouse)} 
-        className="p-1 text-red-500 hover:text-red-700" 
-        title="Delete"
-      >
-        <DeleteIcon className="h-5 w-5" />
-      </button>
-    </div>
-  ), []);
+  const renderActions = useCallback(
+    (warehouse: Warehouse) => (
+      <div className="flex space-x-2">
+        <button
+          onClick={() => handleOpenModal(warehouse)}
+          className="p-1 text-primary-500 hover:text-primary-700"
+          title="Edit"
+        >
+          <EditIcon className="h-5 w-5" />
+        </button>
+        <button
+          onClick={() => handleDeleteWarehouse(warehouse)}
+          className="p-1 text-red-500 hover:text-red-700"
+          title="Delete"
+        >
+          <DeleteIcon className="h-5 w-5" />
+        </button>
+      </div>
+    ),
+    []
+  );
 
   const columns: ColumnDefinition<Warehouse, keyof Warehouse>[] = [
     { key: 'code', header: 'Code', sortable: true },
     { key: 'name', header: 'Name', sortable: true },
     { key: 'city', header: 'City', sortable: true },
-    { key: 'state', header: 'State', sortable: true },
+    { key: 'country', header: 'Country', sortable: true },
     { key: 'phone', header: 'Phone', sortable: true },
     { key: 'status', header: 'Status', sortable: true },
   ];
@@ -157,9 +196,9 @@ const WarehouseManagementPage: React.FC = () => {
   const filteredWarehouses = useMemo(() => {
     if (!searchTerm) return warehouses;
     const lowerSearchTerm = searchTerm.toLowerCase();
-    
-    return warehouses.filter(warehouse => 
-      Object.values(warehouse).some(value => 
+
+    return warehouses.filter(warehouse =>
+      Object.values(warehouse).some(value =>
         String(value).toLowerCase().includes(lowerSearchTerm)
       )
     );
@@ -177,7 +216,7 @@ const WarehouseManagementPage: React.FC = () => {
   }
 
   return (
-    <PageContainer 
+    <PageContainer
       title="Warehouse Management"
       actions={
         <button
@@ -198,7 +237,7 @@ const WarehouseManagementPage: React.FC = () => {
             type="text"
             placeholder="Search warehouses..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="w-full px-4 py-2 pl-10 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-secondary-700 dark:border-secondary-600 dark:text-secondary-100"
           />
           <BuildingOfficeIcon className="absolute left-3 top-2.5 h-5 w-5 text-secondary-400" />
@@ -223,19 +262,28 @@ const WarehouseManagementPage: React.FC = () => {
       )}
 
       {/* Create/Edit Warehouse Modal */}
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
-        title={currentWarehouse.id ? 'Edit Warehouse' : 'Create New Warehouse'} 
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={currentWarehouse.id ? 'Edit Warehouse' : 'Create New Warehouse'}
         size="xl"
       >
-        <form onSubmit={(e) => { e.preventDefault(); handleSaveWarehouse(); }} className="space-y-4">
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleSaveWarehouse();
+          }}
+          className="space-y-4"
+        >
           <ErrorMessage message={isModalOpen ? error : null} />
-          
+
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Warehouse Name *
               </label>
               <input
@@ -250,7 +298,10 @@ const WarehouseManagementPage: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="code" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="code"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Warehouse Code *
               </label>
               <input
@@ -269,7 +320,10 @@ const WarehouseManagementPage: React.FC = () => {
           {/* Address Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="address"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Address *
               </label>
               <textarea
@@ -285,7 +339,10 @@ const WarehouseManagementPage: React.FC = () => {
             </div>
             <div className="space-y-4">
               <div>
-                <label htmlFor="city" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+                <label
+                  htmlFor="city"
+                  className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+                >
                   City *
                 </label>
                 <input
@@ -300,7 +357,10 @@ const WarehouseManagementPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label htmlFor="state" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+                <label
+                  htmlFor="state"
+                  className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+                >
                   State *
                 </label>
                 <input
@@ -319,7 +379,10 @@ const WarehouseManagementPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="country" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="country"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Country
               </label>
               <input
@@ -333,7 +396,10 @@ const WarehouseManagementPage: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="postal_code" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="postal_code"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Postal Code
               </label>
               <input
@@ -347,7 +413,10 @@ const WarehouseManagementPage: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="timezone" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="timezone"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Timezone
               </label>
               <select
@@ -372,7 +441,10 @@ const WarehouseManagementPage: React.FC = () => {
           {/* Contact Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Contact Number
               </label>
               <input
@@ -386,7 +458,10 @@ const WarehouseManagementPage: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Email
               </label>
               <input
@@ -404,7 +479,10 @@ const WarehouseManagementPage: React.FC = () => {
           {/* Additional Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="capacity_sqft" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="capacity_sqft"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Capacity (sq ft)
               </label>
               <input
@@ -418,7 +496,10 @@ const WarehouseManagementPage: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="status" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+              <label
+                htmlFor="status"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
                 Status
               </label>
               <select
@@ -454,8 +535,10 @@ const WarehouseManagementPage: React.FC = () => {
                   <LoadingSpinner className="w-4 h-4 mr-2 inline" />
                   {currentWarehouse.id ? 'Updating...' : 'Creating...'}
                 </>
+              ) : currentWarehouse.id ? (
+                'Update Warehouse'
               ) : (
-                currentWarehouse.id ? 'Update Warehouse' : 'Create Warehouse'
+                'Create Warehouse'
               )}
             </button>
           </div>

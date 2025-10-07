@@ -1,5 +1,9 @@
-
-import { ReportCategory, ReportDefinition, ColumnDefinition, InventoryItem } from '@/types';
+import {
+  ReportCategory,
+  ReportDefinition,
+  ColumnDefinition,
+  InventoryItem,
+} from '@/types';
 
 export const REPORT_DEFINITIONS: ReportDefinition[] = [
   {
@@ -18,9 +22,15 @@ export const REPORT_DEFINITIONS: ReportDefinition[] = [
       { key: 'category', header: 'Category', sortable: true },
       { key: 'quantity', header: 'Quantity', sortable: true },
       { key: 'location', header: 'Location', sortable: true },
-      { key: 'reorderPoint', header: 'Reorder Point', sortable: true, render: (item: InventoryItem) => item.isSerialized ? 'N/A' : item.reorderPoint },
+      {
+        key: 'reorderPoint',
+        header: 'Reorder Point',
+        sortable: true,
+        render: (item: InventoryItem) =>
+          item.isSerialized ? 'N/A' : item.reorderPoint,
+      },
     ] as ColumnDefinition<InventoryItem, keyof InventoryItem>[],
-    naturalLanguageQuery: 'current stock levels'
+    naturalLanguageQuery: 'current stock levels',
   },
   {
     id: 'inv_serialized_report',
@@ -28,7 +38,18 @@ export const REPORT_DEFINITIONS: ReportDefinition[] = [
     description: 'Track individual serialized items and their status.',
     category: ReportCategory.Inventory,
     sampleDataKey: 'inv_serialized_report',
-    filters: [{ id: 'sku', label: 'SKU', type: 'text' }, { id: 'status', label: 'Status', type: 'select', options: [{value: 'In Stock', label: 'In Stock'}, {value: 'Allocated', label: 'Allocated'}] }],
+    filters: [
+      { id: 'sku', label: 'SKU', type: 'text' },
+      {
+        id: 'status',
+        label: 'Status',
+        type: 'select',
+        options: [
+          { value: 'In Stock', label: 'In Stock' },
+          { value: 'Allocated', label: 'Allocated' },
+        ],
+      },
+    ],
     columns: [
       { key: 'sku', header: 'SKU', sortable: true },
       { key: 'itemName', header: 'Item Name', sortable: true },
@@ -41,10 +62,17 @@ export const REPORT_DEFINITIONS: ReportDefinition[] = [
   {
     id: 'inv_aging_report',
     name: 'Inventory Aging Report',
-    description: 'View items marked as aged (pre-existing inventory before app deployment).',
+    description:
+      'View items marked as aged (pre-existing inventory before app deployment).',
     category: ReportCategory.Inventory,
     sampleDataKey: 'inv_aging_report',
-    filters: [{ id: 'minDaysInStock', label: 'Min. Days In Stock', type: 'number-range' }],
+    filters: [
+      {
+        id: 'minDaysInStock',
+        label: 'Min. Days In Stock',
+        type: 'number-range',
+      },
+    ],
     columns: [
       { key: 'sku', header: 'SKU', sortable: true },
       { key: 'name', header: 'Item Name', sortable: true },
@@ -52,15 +80,32 @@ export const REPORT_DEFINITIONS: ReportDefinition[] = [
       { key: 'entryDate', header: 'Entry Date', sortable: true },
       { key: 'lastMovementDate', header: 'Last Movement', sortable: true },
       { key: 'daysInStock', header: 'Days In Stock', sortable: true },
-      { key: 'costPrice', header: 'Cost Price', sortable: true, render: (item: {costPrice?: number|string}) => {
-        const price = Number(item.costPrice);
-        return !isNaN(price) ? `$${price.toFixed(2)}` : 'N/A';
-      } },
-      { key: 'totalValue', header: 'Total Value', sortable: true, render: (item: {quantity: number; costPrice?: number|string}) => {
-        const price = Number(item.costPrice);
-        return !isNaN(price) ? `$${(item.quantity * price).toFixed(2)}` : 'N/A';
-      } },
-      { key: 'isAged', header: 'Aged Item', sortable: true, render: (item: {isAged?: boolean}) => item.isAged ? '✔️' : '' },
+      {
+        key: 'costPrice',
+        header: 'Cost Price',
+        sortable: true,
+        render: (item: { costPrice?: number | string }) => {
+          const price = Number(item.costPrice);
+          return !isNaN(price) ? `$${price.toFixed(2)}` : 'N/A';
+        },
+      },
+      {
+        key: 'totalValue',
+        header: 'Total Value',
+        sortable: true,
+        render: (item: { quantity: number; costPrice?: number | string }) => {
+          const price = Number(item.costPrice);
+          return !isNaN(price)
+            ? `$${(item.quantity * price).toFixed(2)}`
+            : 'N/A';
+        },
+      },
+      {
+        key: 'isAged',
+        header: 'Aged Item',
+        sortable: true,
+        render: (item: { isAged?: boolean }) => (item.isAged ? '✔️' : ''),
+      },
     ],
   },
   {
@@ -74,10 +119,24 @@ export const REPORT_DEFINITIONS: ReportDefinition[] = [
       { key: 'sku', header: 'SKU', sortable: true },
       { key: 'itemName', header: 'Item Name', sortable: true }, // Matches mock and expected backend key from service
       { key: 'currentStock', header: 'Current Stock', sortable: true },
-      { key: 'predictedStockOutDays', header: 'Predicted Stock-Out (Days)', sortable: true },
-      { key: 'confidence', header: 'Confidence', sortable: true, render: (item: {confidence?: number}) => item.confidence ? `${(item.confidence * 100).toFixed(0)}%` : 'N/A'},
-      { key: 'recommendedReorderQty', header: 'Rec. Reorder Qty', sortable: true },
+      {
+        key: 'predictedStockOutDays',
+        header: 'Predicted Stock-Out (Days)',
+        sortable: true,
+      },
+      {
+        key: 'confidence',
+        header: 'Confidence',
+        sortable: true,
+        render: (item: { confidence?: number }) =>
+          item.confidence ? `${(item.confidence * 100).toFixed(0)}%` : 'N/A',
+      },
+      {
+        key: 'recommendedReorderQty',
+        header: 'Rec. Reorder Qty',
+        sortable: true,
+      },
     ],
-    naturalLanguageQuery: 'stock out risk'
+    naturalLanguageQuery: 'stock out risk',
   },
 ];

@@ -9,7 +9,9 @@ global.IntersectionObserver = class IntersectionObserver {
   root: null = null;
   rootMargin: string = '';
   thresholds: ReadonlyArray<number> = [];
-  takeRecords() { return []; }
+  takeRecords() {
+    return [];
+  }
 } as any;
 
 // Mock scrollIntoView for JSDOM
@@ -70,13 +72,16 @@ try {
 // Polyfill for setImmediate in Jest
 if (typeof global.setImmediate === 'undefined') {
   // @ts-expect-error: Node.js setImmediate has __promisify__, this polyfill does not
-  global.setImmediate = (fn: (...args: any[]) => void, ...args: any[]): ReturnType<typeof setTimeout> => setTimeout(fn, 0, ...args);
+  global.setImmediate = (
+    fn: (...args: any[]) => void,
+    ...args: any[]
+  ): ReturnType<typeof setTimeout> => setTimeout(fn, 0, ...args);
 }
 
 // Suppress console warnings in tests
 const originalError = console.error;
 beforeAll(() => {
-  console.error = function(...args) {
+  console.error = function (...args) {
     if (
       typeof args[0] === 'string' &&
       args[0].includes('Warning: ReactDOM.render is deprecated')
@@ -89,4 +94,4 @@ beforeAll(() => {
 
 afterAll(() => {
   console.error = originalError;
-}); 
+});

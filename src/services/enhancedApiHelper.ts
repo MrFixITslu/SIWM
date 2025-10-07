@@ -1,4 +1,5 @@
 import { BASE_API_URL, getCommonHeaders } from './apiConfig';
+
 import { requestCache, backgroundSyncManager } from '@/utils/serviceWorker';
 
 interface ApiOptions {
@@ -26,9 +27,9 @@ class EnhancedApiHelper {
       if (response.status === 204) return {} as T; // No Content success
       return response.json();
     }
-    
-    const errorData = await response.json().catch(() => ({ 
-      message: `Request failed with status ${response.status}: ${response.statusText}` 
+
+    const errorData = await response.json().catch(() => ({
+      message: `Request failed with status ${response.status}: ${response.statusText}`,
     }));
     throw new Error(errorData.message || 'An unknown API error occurred');
   }
@@ -37,7 +38,11 @@ class EnhancedApiHelper {
     path: string,
     options: RequestInit & ApiOptions = {}
   ): Promise<ApiResponse<T>> {
-    const { cacheTTL = 5 * 60 * 1000, offline = false, ...fetchOptions } = options;
+    const {
+      cacheTTL = 5 * 60 * 1000,
+      offline = false,
+      ...fetchOptions
+    } = options;
     const url = `${this.baseUrl}${path}`;
     const cacheKey = `${fetchOptions.method || 'GET'}:${url}`;
 
@@ -52,7 +57,7 @@ class EnhancedApiHelper {
     try {
       const response = await fetch(url, {
         headers: getCommonHeaders(),
-        ...fetchOptions
+        ...fetchOptions,
       });
 
       const data = await this.handleResponse<T>(response);
@@ -77,7 +82,7 @@ class EnhancedApiHelper {
             method: fetchOptions.method || 'POST',
             url,
             body: fetchOptions.body,
-            headers: getCommonHeaders()
+            headers: getCommonHeaders(),
           });
         }
       }
@@ -88,9 +93,9 @@ class EnhancedApiHelper {
 
   async get<T>(path: string, options?: ApiOptions): Promise<T> {
     const { cache, ...rest } = options || {};
-    const response = await this.makeRequest<T>(path, { 
+    const response = await this.makeRequest<T>(path, {
       method: 'GET',
-      ...rest 
+      ...rest,
     });
     return response.data;
   }
@@ -100,21 +105,25 @@ class EnhancedApiHelper {
     const response = await this.makeRequest<T>(path, {
       method: 'POST',
       body: JSON.stringify(body),
-      ...rest
+      ...rest,
     });
     return response.data;
   }
 
-  async postForm<T>(path: string, formData: FormData, options?: ApiOptions): Promise<T> {
+  async postForm<T>(
+    path: string,
+    formData: FormData,
+    options?: ApiOptions
+  ): Promise<T> {
     const { cache, ...rest } = options || {};
     const headers = getCommonHeaders();
     delete headers['Content-Type']; // Let browser set content-type for FormData
-    
+
     const response = await this.makeRequest<T>(path, {
       method: 'POST',
       headers,
       body: formData,
-      ...rest
+      ...rest,
     });
     return response.data;
   }
@@ -124,7 +133,7 @@ class EnhancedApiHelper {
     const response = await this.makeRequest<T>(path, {
       method: 'PUT',
       body: JSON.stringify(body),
-      ...rest
+      ...rest,
     });
     return response.data;
   }
@@ -133,7 +142,7 @@ class EnhancedApiHelper {
     const { cache, ...rest } = options || {};
     await this.makeRequest(path, {
       method: 'DELETE',
-      ...rest
+      ...rest,
     });
   }
 
@@ -145,7 +154,7 @@ class EnhancedApiHelper {
       const method = request.method || 'GET';
       const response = await this.makeRequest(request.path, {
         method: method as any,
-        body: request.body
+        body: request.body,
       });
       return [key, response.data];
     });
@@ -158,20 +167,24 @@ class EnhancedApiHelper {
   async poll<T>(
     path: string,
     condition: (data: T) => boolean,
-    options: ApiOptions & { 
-      interval?: number; 
-      maxAttempts?: number; 
-      backoffMultiplier?: number 
+    options: ApiOptions & {
+      interval?: number;
+      maxAttempts?: number;
+      backoffMultiplier?: number;
     } = {}
   ): Promise<T> {
-    const { interval = 1000, maxAttempts = 10, backoffMultiplier = 1.5 } = options;
+    const {
+      interval = 1000,
+      maxAttempts = 10,
+      backoffMultiplier = 1.5,
+    } = options;
     let currentInterval = interval;
     let attempts = 0;
 
     while (attempts < maxAttempts) {
       try {
         const data = await this.get<T>(path, options);
-        
+
         if (condition(data)) {
           return data;
         }
@@ -182,20 +195,26 @@ class EnhancedApiHelper {
       } catch (error) {
         console.error(`Polling attempt ${attempts + 1} failed:`, error);
         attempts++;
-        
+
         if (attempts >= maxAttempts) {
           throw error;
         }
       }
     }
 
-    throw new Error('Polling timeout: condition not met within maximum attempts');
+    throw new Error(
+      'Polling timeout: condition not met within maximum attempts'
+    );
   }
 
   // Retry with exponential backoff
   async retry<T>(
     fn: () => Promise<T>,
-    options: { maxAttempts?: number; baseDelay?: number; maxDelay?: number } = {}
+    options: {
+      maxAttempts?: number;
+      baseDelay?: number;
+      maxDelay?: number;
+    } = {}
   ): Promise<T> {
     const { maxAttempts = 3, baseDelay = 1000, maxDelay = 10000 } = options;
     let lastError: Error;
@@ -205,7 +224,7 @@ class EnhancedApiHelper {
         return await fn();
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt === maxAttempts) {
           throw lastError;
         }
@@ -230,13 +249,13 @@ class EnhancedApiHelper {
 
   // Preload data for better UX
   async preload<T>(paths: string[]): Promise<void> {
-    const promises = paths.map(path => 
+    const promises = paths.map(path =>
       this.get<T>(path).catch(() => {
         // Silently fail preload requests
         console.warn(`Failed to preload: ${path}`);
       })
     );
-    
+
     await Promise.all(promises);
   }
 }
@@ -245,4 +264,4 @@ class EnhancedApiHelper {
 export const enhancedApi = new EnhancedApiHelper(BASE_API_URL);
 
 // Export types
-export type { ApiOptions, ApiResponse }; 
+export type { ApiOptions, ApiResponse };

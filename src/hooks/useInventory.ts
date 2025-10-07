@@ -1,6 +1,8 @@
-
 import { useContext } from 'react';
-import InventoryContext, { InventoryContextType } from '@/contexts/InventoryContext';
+
+import InventoryContext, {
+  InventoryContextType,
+} from '@/contexts/InventoryContext';
 
 export const useInventory = (): InventoryContextType => {
   const context = useContext(InventoryContext);

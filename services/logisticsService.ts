@@ -51,20 +51,23 @@ export interface ProcurementInsights {
 
 class LogisticsService {
   async optimizeShippingRoute(
-    origin: string, 
-    destination: string, 
+    origin: string,
+    destination: string,
     constraints: any = {}
   ): Promise<ShippingRouteOptimization> {
     try {
-      const response = await fetch(`${BASE_API_URL}/logistics/optimize-shipping-route`, {
-        method: 'POST',
-        headers: getCommonHeaders(),
-        body: JSON.stringify({ origin, destination, constraints }),
-      });
+      const response = await fetch(
+        `${BASE_API_URL}/logistics/optimize-shipping-route`,
+        {
+          method: 'POST',
+          headers: getCommonHeaders(),
+          body: JSON.stringify({ origin, destination, constraints }),
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ 
-          message: `Shipping route optimization failed with status: ${response.status}` 
+        const errorData = await response.json().catch(() => ({
+          message: `Shipping route optimization failed with status: ${response.status}`,
         }));
         throw new Error(errorData.message);
       }
@@ -78,20 +81,23 @@ class LogisticsService {
   }
 
   async forecastInventory(
-    historicalData: any, 
-    currentStock: any, 
+    historicalData: any,
+    currentStock: any,
     leadTimes: any = {}
   ): Promise<InventoryForecast> {
     try {
-      const response = await fetch(`${BASE_API_URL}/logistics/forecast-inventory`, {
-        method: 'POST',
-        headers: getCommonHeaders(),
-        body: JSON.stringify({ historicalData, currentStock, leadTimes }),
-      });
+      const response = await fetch(
+        `${BASE_API_URL}/logistics/forecast-inventory`,
+        {
+          method: 'POST',
+          headers: getCommonHeaders(),
+          body: JSON.stringify({ historicalData, currentStock, leadTimes }),
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ 
-          message: `Inventory forecasting failed with status: ${response.status}` 
+        const errorData = await response.json().catch(() => ({
+          message: `Inventory forecasting failed with status: ${response.status}`,
         }));
         throw new Error(errorData.message);
       }
@@ -105,19 +111,22 @@ class LogisticsService {
   }
 
   async analyzeSupplierPerformance(
-    supplierData: any, 
+    supplierData: any,
     orderHistory: any
   ): Promise<SupplierPerformanceAnalysis> {
     try {
-      const response = await fetch(`${BASE_API_URL}/logistics/analyze-supplier-performance`, {
-        method: 'POST',
-        headers: getCommonHeaders(),
-        body: JSON.stringify({ supplierData, orderHistory }),
-      });
+      const response = await fetch(
+        `${BASE_API_URL}/logistics/analyze-supplier-performance`,
+        {
+          method: 'POST',
+          headers: getCommonHeaders(),
+          body: JSON.stringify({ supplierData, orderHistory }),
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ 
-          message: `Supplier performance analysis failed with status: ${response.status}` 
+        const errorData = await response.json().catch(() => ({
+          message: `Supplier performance analysis failed with status: ${response.status}`,
         }));
         throw new Error(errorData.message);
       }
@@ -126,25 +135,30 @@ class LogisticsService {
       return data.data;
     } catch (error: any) {
       console.error('Error analyzing supplier performance:', error);
-      throw new Error(error.message || 'Failed to analyze supplier performance');
+      throw new Error(
+        error.message || 'Failed to analyze supplier performance'
+      );
     }
   }
 
   async optimizeWarehouseLayout(
-    currentLayout: any, 
-    inventoryData: any, 
+    currentLayout: any,
+    inventoryData: any,
     orderPatterns: any = {}
   ): Promise<WarehouseLayoutOptimization> {
     try {
-      const response = await fetch(`${BASE_API_URL}/logistics/optimize-warehouse-layout`, {
-        method: 'POST',
-        headers: getCommonHeaders(),
-        body: JSON.stringify({ currentLayout, inventoryData, orderPatterns }),
-      });
+      const response = await fetch(
+        `${BASE_API_URL}/logistics/optimize-warehouse-layout`,
+        {
+          method: 'POST',
+          headers: getCommonHeaders(),
+          body: JSON.stringify({ currentLayout, inventoryData, orderPatterns }),
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ 
-          message: `Warehouse layout optimization failed with status: ${response.status}` 
+        const errorData = await response.json().catch(() => ({
+          message: `Warehouse layout optimization failed with status: ${response.status}`,
         }));
         throw new Error(errorData.message);
       }
@@ -158,19 +172,22 @@ class LogisticsService {
   }
 
   async generateProcurementInsights(
-    procurementData: any, 
+    procurementData: any,
     marketTrends: any = {}
   ): Promise<ProcurementInsights> {
     try {
-      const response = await fetch(`${BASE_API_URL}/logistics/generate-procurement-insights`, {
-        method: 'POST',
-        headers: getCommonHeaders(),
-        body: JSON.stringify({ procurementData, marketTrends }),
-      });
+      const response = await fetch(
+        `${BASE_API_URL}/logistics/generate-procurement-insights`,
+        {
+          method: 'POST',
+          headers: getCommonHeaders(),
+          body: JSON.stringify({ procurementData, marketTrends }),
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ 
-          message: `Procurement insights generation failed with status: ${response.status}` 
+        const errorData = await response.json().catch(() => ({
+          message: `Procurement insights generation failed with status: ${response.status}`,
         }));
         throw new Error(errorData.message);
       }
@@ -179,9 +196,11 @@ class LogisticsService {
       return data.data;
     } catch (error: any) {
       console.error('Error generating procurement insights:', error);
-      throw new Error(error.message || 'Failed to generate procurement insights');
+      throw new Error(
+        error.message || 'Failed to generate procurement insights'
+      );
     }
   }
 }
 
-export const logisticsService = new LogisticsService(); 
+export const logisticsService = new LogisticsService();

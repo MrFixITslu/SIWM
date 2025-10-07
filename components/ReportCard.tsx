@@ -1,28 +1,35 @@
-
 import React from 'react';
-import { ReportDefinition } from '@/types';
+
 import { ChartBarIcon, AiIcon } from '@/constants'; // Assuming ChartBarIcon is generic
+import { ReportDefinition } from '@/types';
 
 interface ReportCardProps {
   report: ReportDefinition;
   onViewReport: (report: ReportDefinition) => void;
 }
 
-const ReportCardInner: React.FC<ReportCardProps> = ({ report, onViewReport }) => {
+const ReportCardInner: React.FC<ReportCardProps> = ({
+  report,
+  onViewReport,
+}) => {
   const IconComponent = report.aiPowered ? AiIcon : ChartBarIcon;
 
   return (
-    <div 
+    <div
       className="bg-white dark:bg-secondary-800 p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between h-full"
       onClick={() => onViewReport(report)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onViewReport(report)}
+      onKeyDown={e =>
+        (e.key === 'Enter' || e.key === ' ') && onViewReport(report)
+      }
       aria-label={`View ${report.name} report`}
     >
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-primary-600 dark:text-primary-400">{report.name}</h3>
+          <h3 className="text-lg font-semibold text-primary-600 dark:text-primary-400">
+            {report.name}
+          </h3>
           <IconComponent className="h-7 w-7 text-secondary-500 dark:text-secondary-400" />
         </div>
         <p className="text-sm text-secondary-600 dark:text-secondary-300 leading-relaxed">

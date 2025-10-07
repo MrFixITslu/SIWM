@@ -24,7 +24,7 @@ const InteractiveTable: React.FC<InteractiveTableProps> = ({
   columns,
   title,
   icon: Icon,
-  emptyMessage = "No data available",
+  emptyMessage = 'No data available',
   onRowClick,
   href,
   maxRows,
@@ -68,7 +68,7 @@ const InteractiveTable: React.FC<InteractiveTableProps> = ({
           <table className="min-w-full divide-y divide-secondary-200 dark:divide-secondary-700">
             <thead className="bg-secondary-50 dark:bg-secondary-700/50">
               <tr>
-                {columns.map((column) => (
+                {columns.map(column => (
                   <th
                     key={column.key}
                     className={`px-6 py-3 text-left text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider ${
@@ -91,7 +91,7 @@ const InteractiveTable: React.FC<InteractiveTableProps> = ({
                   `}
                   onClick={() => isClickable && handleRowClick(item)}
                 >
-                  {columns.map((column) => (
+                  {columns.map(column => (
                     <td
                       key={column.key}
                       className={`px-6 py-4 whitespace-nowrap text-sm transition-colors duration-200 ${
@@ -152,4 +152,4 @@ const InteractiveTable: React.FC<InteractiveTableProps> = ({
   );
 };
 
-export default InteractiveTable; 
+export default InteractiveTable;

@@ -1,5 +1,6 @@
 // services/warehouseService.ts
 import { api } from './apiHelper';
+
 import { Warehouse } from '@/types';
 
 export const warehouseService = {
@@ -16,13 +17,18 @@ export const warehouseService = {
   },
 
   // Create new warehouse
-  createWarehouse: async (warehouse: Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>): Promise<Warehouse> => {
+  createWarehouse: async (
+    warehouse: Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Warehouse> => {
     const data = await api.post<any>('/warehouses', warehouse);
     return data.warehouse;
   },
 
   // Update warehouse
-  updateWarehouse: async (id: number, warehouse: Partial<Warehouse>): Promise<Warehouse> => {
+  updateWarehouse: async (
+    id: number,
+    warehouse: Partial<Warehouse>
+  ): Promise<Warehouse> => {
     const data = await api.put<any>(`/warehouses/${id}`, warehouse);
     return data.warehouse;
   },

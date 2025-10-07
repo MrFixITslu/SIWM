@@ -26,16 +26,19 @@ class SKUGeneratorService {
   private readonly SKU_PREFIXES = {
     'Digicel+': 'DIG+',
     'Digicel Business': 'DIGB',
-    'Commercial': 'COM',
-    'Marketing': 'MKT',
+    Commercial: 'COM',
+    Marketing: 'MKT',
     'Outside Plant (OSP)': 'OSP',
-    'Field Force & HVAC': 'FFH'
+    'Field Force & HVAC': 'FFH',
   };
 
   /**
    * Generate SKU for a single item (frontend: only use hash/timestamp, no internet lookup)
    */
-  async generateSKU(itemName: string, department: string): Promise<SKUGenerationResult> {
+  async generateSKU(
+    itemName: string,
+    department: string
+  ): Promise<SKUGenerationResult> {
     // Only use hash and timestamp methods in the frontend
     try {
       const hashResult = this.generateFromHash(itemName, department);
@@ -50,31 +53,42 @@ class SKUGeneratorService {
   /**
    * Generate SKU using hash of item name
    */
-  private generateFromHash(itemName: string, department: string): SKUGenerationResult {
-    const prefix = this.SKU_PREFIXES[department as keyof typeof this.SKU_PREFIXES] || 'GEN';
+  private generateFromHash(
+    itemName: string,
+    department: string
+  ): SKUGenerationResult {
+    const prefix =
+      this.SKU_PREFIXES[department as keyof typeof this.SKU_PREFIXES] || 'GEN';
     const hash = this.simpleHash(itemName);
     const sku = `${prefix}-${hash.toString().padStart(6, '0')}`;
-    
+
     return {
       sku,
       source: 'hash-generation',
-      confidence: 0.7
+      confidence: 0.7,
     };
   }
 
   /**
    * Generate SKU using timestamp
    */
-  private generateFromTimestamp(itemName: string, department: string): SKUGenerationResult {
-    const prefix = this.SKU_PREFIXES[department as keyof typeof this.SKU_PREFIXES] || 'GEN';
+  private generateFromTimestamp(
+    itemName: string,
+    department: string
+  ): SKUGenerationResult {
+    const prefix =
+      this.SKU_PREFIXES[department as keyof typeof this.SKU_PREFIXES] || 'GEN';
     const timestamp = Date.now().toString().slice(-6);
-    const itemCode = itemName.substring(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const itemCode = itemName
+      .substring(0, 3)
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
     const sku = `${prefix}-${itemCode}-${timestamp}`;
-    
+
     return {
       sku,
       source: 'timestamp-generation',
-      confidence: 0.5
+      confidence: 0.5,
     };
   }
 
@@ -85,7 +99,7 @@ class SKUGeneratorService {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
@@ -94,17 +108,22 @@ class SKUGeneratorService {
   /**
    * Process Excel file and generate SKUs for all items
    */
-  async processExcelInventory(items: ExcelInventoryItem[]): Promise<ProcessedInventoryItem[]> {
+  async processExcelInventory(
+    items: ExcelInventoryItem[]
+  ): Promise<ProcessedInventoryItem[]> {
     const processedItems: ProcessedInventoryItem[] = [];
-    
+
     for (const item of items) {
       try {
-        const skuResult = await this.generateSKU(item.itemName, item.department);
+        const skuResult = await this.generateSKU(
+          item.itemName,
+          item.department
+        );
         processedItems.push({
           ...item,
           sku: skuResult.sku || 'update',
           skuSource: skuResult.source,
-          status: 'success'
+          status: 'success',
         });
       } catch (error) {
         // If SKU generation fails, still add the item as success with sku = 'update'
@@ -112,11 +131,11 @@ class SKUGeneratorService {
           ...item,
           sku: 'update',
           skuSource: 'not found',
-          status: 'success'
+          status: 'success',
         });
       }
     }
-    
+
     return processedItems;
   }
 
@@ -125,36 +144,41 @@ class SKUGeneratorService {
    */
   validateExcelData(data: any[]): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     if (!Array.isArray(data) || data.length === 0) {
       errors.push('Excel file must contain at least one row of data');
       return { isValid: false, errors };
     }
 
     const requiredColumns = ['Item Name', 'Department', 'Quantity'];
-    
+
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       const rowNumber = i + 2; // Excel rows start at 2 (1 is header)
-      
+
       for (const column of requiredColumns) {
         if (!row[column]) {
           errors.push(`Row ${rowNumber}: Missing required column "${column}"`);
         }
       }
-      
+
       if (row['Quantity'] && isNaN(Number(row['Quantity']))) {
         errors.push(`Row ${rowNumber}: Quantity must be a number`);
       }
-      
-      if (row['Department'] && !Object.keys(this.SKU_PREFIXES).includes(row['Department'])) {
-        errors.push(`Row ${rowNumber}: Invalid department "${row['Department']}"`);
+
+      if (
+        row['Department'] &&
+        !Object.keys(this.SKU_PREFIXES).includes(row['Department'])
+      ) {
+        errors.push(
+          `Row ${rowNumber}: Invalid department "${row['Department']}"`
+        );
       }
     }
-    
+
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -166,4 +190,4 @@ class SKUGeneratorService {
   }
 }
 
-export const skuGeneratorService = new SKUGeneratorService(); 
+export const skuGeneratorService = new SKUGeneratorService();

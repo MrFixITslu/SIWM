@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+
 import App from './App'; // Make sure App.tsx exists in the same folder
 import './index.css'; // Optional: include global styles if you have them
 

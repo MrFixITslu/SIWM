@@ -7,7 +7,8 @@
  * and set the VITE_API_BASE_URL variable.
  * Example for development: VITE_API_BASE_URL=http://localhost:4000/api/v1
  */
-const viteEnv = typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined;
+const viteEnv =
+  typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined;
 
 // Dynamic API URL detection for network access
 function getApiBaseUrl(): string {
@@ -20,7 +21,7 @@ function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const currentHost = window.location.hostname;
     const currentPort = window.location.port;
-    
+
     // If accessing from a remote IP (not localhost), use the same IP for backend
     if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
       return `http://${currentHost}:4000/api/v1`;
@@ -39,7 +40,7 @@ export const BASE_API_URL = getApiBaseUrl();
 export const getCommonHeaders = (): Record<string, string> => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
   };
 
   // Attempt to get user info (which includes the token) from localStorage
@@ -50,11 +51,11 @@ export const getCommonHeaders = (): Record<string, string> => {
       if (userInfo && userInfo.token) {
         headers['Authorization'] = `Bearer ${userInfo.token}`;
       } else {
-        console.warn("User info found in localStorage, but token is missing.");
+        console.warn('User info found in localStorage, but token is missing.');
         delete headers['Authorization']; // Ensure no stale Authorization header
       }
     } catch (e) {
-      console.error("Failed to parse userInfo from localStorage:", e);
+      console.error('Failed to parse userInfo from localStorage:', e);
       // Potentially corrupted data, clear it to prevent further issues
       localStorage.removeItem('userInfo');
       delete headers['Authorization']; // Ensure no stale Authorization header
@@ -67,5 +68,5 @@ export const getCommonHeaders = (): Record<string, string> => {
 // or if you handle token manually per request.
 export const COMMON_HEADERS_STATIC = {
   'Content-Type': 'application/json',
-  'Accept': 'application/json',
+  Accept: 'application/json',
 };

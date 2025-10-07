@@ -50,11 +50,11 @@ const createUser = async (req, res, next) => {
 // @access  Private (Admin)
 const updateUser = async (req, res, next) => {
     const userId = parseInt(req.params.id, 10);
-    const { role, permissions } = req.body;
+    const { role, permissions, email_notifications_enabled } = req.body;
     if (isNaN(userId)) return res.status(400).json({ message: 'Invalid user ID.' });
-    if (!role && !permissions) {
+    if (!role && !permissions && email_notifications_enabled === undefined) {
         res.status(400);
-        return next(new Error('No data provided to update. Provide role and/or permissions.'));
+        return next(new Error('No data provided to update. Provide role, permissions, and/or email_notifications_enabled.'));
     }
      if (role && !USER_GROUPS.includes(role)) {
         res.status(400);
@@ -62,7 +62,7 @@ const updateUser = async (req, res, next) => {
     }
     try {
         const actingAdminId = req.user.id;
-        const updatedUser = await userService.updateUser(userId, { role, permissions }, actingAdminId);
+        const updatedUser = await userService.updateUser(userId, { role, permissions, email_notifications_enabled }, actingAdminId);
         res.json(updatedUser);
     } catch (error) {
         next(error);

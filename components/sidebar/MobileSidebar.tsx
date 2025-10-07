@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { NavItem, User } from '@/types';
+
 import {
   APP_NAME,
   UserCircleIcon,
@@ -9,6 +9,7 @@ import {
   ArrowLeftOnRectangleIcon,
   CloseIcon as HeroXMarkIcon,
 } from '@/constants';
+import { NavItem, User } from '@/types';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -29,15 +30,17 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({
   handleLogout,
   mainNavLinks,
   bottomNavLinks,
-  user
+  user,
 }) => {
-  const commonIconClass = "h-6 w-6 transition-colors duration-200";
-  const linkClass = "flex items-center px-4 py-3 rounded-lg hover:bg-primary-500 hover:text-white transition-colors duration-200";
-  const activeLinkClass = "bg-primary-600 text-white shadow-md";
-  const inactiveLinkClass = "text-secondary-700 dark:text-secondary-300 hover:dark:text-white";
+  const commonIconClass = 'h-6 w-6 transition-colors duration-200';
+  const linkClass =
+    'flex items-center px-4 py-3 rounded-lg hover:bg-primary-500 hover:text-white transition-colors duration-200';
+  const activeLinkClass = 'bg-primary-600 text-white shadow-md';
+  const inactiveLinkClass =
+    'text-secondary-700 dark:text-secondary-300 hover:dark:text-white';
 
-  const renderNavLinks = (items: NavItem[], onClick?: () => void) => (
-    items.map((item) => (
+  const renderNavLinks = (items: NavItem[], onClick?: () => void) =>
+    items.map(item => (
       <NavLink
         key={item.name}
         to={item.path}
@@ -48,21 +51,38 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({
       >
         <item.icon className={`${commonIconClass} mr-3`} />
         <span className="flex-1">{item.name}</span>
-        {item.notificationCount && item.notificationCount > 0 && 
-          <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{item.notificationCount}</span>
-        }
-        {item.isBeta && <span className="ml-auto text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded-full">Beta</span>}
+        {item.notificationCount && item.notificationCount > 0 && (
+          <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            {item.notificationCount}
+          </span>
+        )}
+        {item.isBeta && (
+          <span className="ml-auto text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded-full">
+            Beta
+          </span>
+        )}
       </NavLink>
-    ))
-  );
+    ));
 
   return (
-    <div className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-      <div className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)}></div>
-      <div className={`relative flex flex-col w-64 h-full bg-white dark:bg-secondary-800 shadow-xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <div
+      className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+    >
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={() => setIsOpen(false)}
+      ></div>
+      <div
+        className={`relative flex flex-col w-64 h-full bg-white dark:bg-secondary-800 shadow-xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
         <div className="flex items-center justify-between h-16 px-4 border-b border-secondary-200 dark:border-secondary-700">
-          <span className="text-xl font-bold text-primary-600 dark:text-primary-400">{APP_NAME}</span>
-          <button onClick={() => setIsOpen(false)} className="text-secondary-500 hover:text-primary-500">
+          <span className="text-xl font-bold text-primary-600 dark:text-primary-400">
+            {APP_NAME}
+          </span>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="text-secondary-500 hover:text-primary-500"
+          >
             <HeroXMarkIcon className="h-6 w-6" />
           </button>
         </div>
@@ -70,17 +90,23 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({
           {user && (
             <div className="px-4 py-3 mb-2 border-b border-secondary-200 dark:border-secondary-700">
               <div className="flex items-center">
-                <UserCircleIcon className={`${commonIconClass} mr-3 text-secondary-500 dark:text-secondary-400`} />
+                <UserCircleIcon
+                  className={`${commonIconClass} mr-3 text-secondary-500 dark:text-secondary-400`}
+                />
                 <div>
-                  <p className="text-sm font-medium text-secondary-800 dark:text-secondary-200">{user.name}</p>
-                  <p className="text-xs text-secondary-500 dark:text-secondary-400">{user.email}</p>
+                  <p className="text-sm font-medium text-secondary-800 dark:text-secondary-200">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-secondary-500 dark:text-secondary-400">
+                    {user.email}
+                  </p>
                 </div>
               </div>
             </div>
           )}
           {renderNavLinks(mainNavLinks, () => setIsOpen(false))}
           <div className="pt-2 mt-2 border-t border-secondary-200 dark:border-secondary-700">
-              {renderNavLinks(bottomNavLinks, () => setIsOpen(false))}
+            {renderNavLinks(bottomNavLinks, () => setIsOpen(false))}
           </div>
         </nav>
         <div className="p-4 border-t border-secondary-200 dark:border-secondary-700 space-y-2">
@@ -88,7 +114,11 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({
             onClick={toggleDarkMode}
             className="w-full flex items-center justify-center px-4 py-2 rounded-lg text-secondary-700 dark:text-secondary-300 hover:bg-secondary-200 dark:hover:bg-secondary-700 transition-colors duration-200"
           >
-            {isDarkMode ? <SunIconSolid className={`${commonIconClass} mr-2`} /> : <MoonIconSolid className={`${commonIconClass} mr-2`} />}
+            {isDarkMode ? (
+              <SunIconSolid className={`${commonIconClass} mr-2`} />
+            ) : (
+              <MoonIconSolid className={`${commonIconClass} mr-2`} />
+            )}
             <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
           {user && (

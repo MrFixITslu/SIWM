@@ -1,9 +1,8 @@
-
 import React from 'react';
 
 interface LoadingSpinnerProps extends React.SVGProps<SVGSVGElement> {}
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = (props) => (
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = props => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     fill="none"

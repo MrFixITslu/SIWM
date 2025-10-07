@@ -1,5 +1,5 @@
-
 import React from 'react';
+
 import PageContainer from '@/components/PageContainer';
 import { ShieldCheckIcon } from '@/constants';
 
@@ -15,7 +15,8 @@ const CompliancePage: React.FC = () => {
           The Compliance Management module is currently being built.
         </p>
         <p className="mt-1 text-sm text-secondary-500">
-          This section will allow for tracking regulatory documents, standards, and audit trails. Please check back later for updates.
+          This section will allow for tracking regulatory documents, standards,
+          and audit trails. Please check back later for updates.
         </p>
       </div>
     </PageContainer>

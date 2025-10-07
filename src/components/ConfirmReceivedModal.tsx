@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import Modal from '@/components/Modal';
-import { ASN, AlertSeverity } from '@/types';
-import { asnService } from '@/services/asnService';
-import { alertingService } from '@/services/alertingService';
+
 import LoadingSpinner from '@/components/icons/LoadingSpinner';
+import Modal from '@/components/Modal';
 import { CheckBadgeIcon, BellIcon } from '@/constants';
+import { alertingService } from '@/services/alertingService';
+import { asnService } from '@/services/asnService';
+import { ASN, AlertSeverity } from '@/types';
 
 interface ConfirmReceivedModalProps {
   isOpen: boolean;
@@ -13,11 +14,11 @@ interface ConfirmReceivedModalProps {
   onConfirmComplete: () => void;
 }
 
-const ConfirmReceivedModal: React.FC<ConfirmReceivedModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  shipment, 
-  onConfirmComplete 
+const ConfirmReceivedModal: React.FC<ConfirmReceivedModalProps> = ({
+  isOpen,
+  onClose,
+  shipment,
+  onConfirmComplete,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingNotification, setIsSendingNotification] = useState(false);
@@ -45,7 +46,7 @@ const ConfirmReceivedModal: React.FC<ConfirmReceivedModalProps> = ({
 
   const handleSendNotification = async () => {
     if (!shipment) return;
-    
+
     setIsSendingNotification(true);
     setError(null);
     try {
@@ -65,7 +66,7 @@ const ConfirmReceivedModal: React.FC<ConfirmReceivedModalProps> = ({
 
   const handleCompleteReceive = async () => {
     if (!shipment) return;
-    
+
     setIsLoading(true);
     setError(null);
     try {
@@ -83,20 +84,27 @@ const ConfirmReceivedModal: React.FC<ConfirmReceivedModalProps> = ({
   if (!shipment) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Review & Confirm - Shipment #${shipment.id}`} size="2xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Review & Confirm - Shipment #${shipment.id}`}
+      size="2xl"
+    >
       <div className="space-y-4">
         {error && (
           <div className="p-3 bg-red-100 text-red-700 rounded-md dark:bg-red-800/30 dark:text-red-300 text-sm">
             {error}
           </div>
         )}
-        
+
         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
           <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
             Review Shipment Processing
           </h3>
           <p className="text-blue-700 dark:text-blue-300 text-sm">
-            All items have been processed and added to inventory. Review the items below and confirm the receive process. You can optionally send a notification to stakeholders.
+            All items have been processed and added to inventory. Review the
+            items below and confirm the receive process. You can optionally send
+            a notification to stakeholders.
           </p>
         </div>
 
@@ -111,10 +119,13 @@ const ConfirmReceivedModal: React.FC<ConfirmReceivedModalProps> = ({
               <h4 className="font-semibold text-secondary-800 dark:text-secondary-200 mb-3">
                 Recently Added Items
               </h4>
-              
+
               <div className="space-y-3">
                 {shipmentDetails.items?.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-secondary-50 dark:bg-secondary-700 rounded-lg">
+                  <div
+                    key={index}
+                    className="flex justify-between items-center p-3 bg-secondary-50 dark:bg-secondary-700 rounded-lg"
+                  >
                     <div className="flex-1">
                       <p className="font-medium text-secondary-800 dark:text-secondary-200">
                         {item.itemName || `Item ${item.inventoryItemId}`}
@@ -164,7 +175,7 @@ const ConfirmReceivedModal: React.FC<ConfirmReceivedModalProps> = ({
           >
             Cancel
           </button>
-          
+
           <div className="flex space-x-3">
             <button
               onClick={handleSendNotification}
@@ -188,7 +199,7 @@ const ConfirmReceivedModal: React.FC<ConfirmReceivedModalProps> = ({
                 </div>
               )}
             </button>
-            
+
             <button
               onClick={handleCompleteReceive}
               disabled={isLoading}
@@ -213,4 +224,4 @@ const ConfirmReceivedModal: React.FC<ConfirmReceivedModalProps> = ({
   );
 };
 
-export default ConfirmReceivedModal; 
+export default ConfirmReceivedModal;

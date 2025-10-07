@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import Modal from '@/components/Modal';
-import ErrorMessage from '@/components/ErrorMessage';
-import { User } from '@/types';
-import { UserRole } from '@/types';
-import { userService } from '@/services/userService';
-import { USER_GROUPS } from '@/constants/permissions';
-import LoadingSpinner from '@/components/icons/LoadingSpinner';
+
 import UserPermissionsForm from './UserPermissionsForm';
-import { useAuth } from '@/contexts/AuthContext';
+
 import ConfirmationModal from '@/components/ConfirmationModal';
+import ErrorMessage from '@/components/ErrorMessage';
+import LoadingSpinner from '@/components/icons/LoadingSpinner';
+import Modal from '@/components/Modal';
+import { USER_GROUPS } from '@/constants/permissions';
+import { useAuth } from '@/contexts/AuthContext';
+import { userService } from '@/services/userService';
+import { User, UserRole } from '@/types';
 
 interface UserEditModalProps {
   isOpen: boolean;
@@ -17,17 +18,29 @@ interface UserEditModalProps {
   user: Partial<User> | null;
 }
 
-const TAILWIND_INPUT_CLASSES = "shadow-sm appearance-none border border-secondary-300 bg-white text-secondary-900 rounded-md px-3 py-2 dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm";
+const TAILWIND_INPUT_CLASSES =
+  'shadow-sm appearance-none border border-secondary-300 bg-white text-secondary-900 rounded-md px-3 py-2 dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm';
 
-const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, user }) => {
-  const [formData, setFormData] = useState<Partial<User> & { password?: string }>({});
+const UserEditModal: React.FC<UserEditModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  user,
+}) => {
+  const [formData, setFormData] = useState<
+    Partial<User> & { password?: string }
+  >({});
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user: currentUser } = useAuth();
   const [resetPassword, setResetPassword] = useState('');
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
-  const [resetPasswordSuccess, setResetPasswordSuccess] = useState<string | null>(null);
-  const [resetPasswordError, setResetPasswordError] = useState<string | null>(null);
+  const [resetPasswordSuccess, setResetPasswordSuccess] = useState<
+    string | null
+  >(null);
+  const [resetPasswordError, setResetPasswordError] = useState<string | null>(
+    null
+  );
   const [showRoleChangeConfirm, setShowRoleChangeConfirm] = useState(false);
   const [pendingRole, setPendingRole] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -41,12 +54,20 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
       if (user) {
         setFormData({ ...user, password: '' });
       } else {
-        setFormData({ name: '', email: '', password: '', role: 'Requester', permissions: [] });
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          role: 'Requester',
+          permissions: [],
+        });
       }
     }
   }, [isOpen, user]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -57,7 +78,10 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
       if (checked) {
         return { ...prev, permissions: [...currentPermissions, permissionId] };
       } else {
-        return { ...prev, permissions: currentPermissions.filter(p => p !== permissionId) };
+        return {
+          ...prev,
+          permissions: currentPermissions.filter(p => p !== permissionId),
+        };
       }
     });
   };
@@ -86,7 +110,10 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
     setError(null);
     try {
       if (isEditing) {
-        await userService.updateUser(user!.id!, { role: formData.role, permissions: formData.permissions });
+        await userService.updateUser(user!.id!, {
+          role: formData.role,
+          permissions: formData.permissions,
+        });
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
       } else {
@@ -95,7 +122,7 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
           email: formData.email!,
           password: formData.password!,
           role: formData.role!,
-          permissions: formData.permissions!
+          permissions: formData.permissions!,
         });
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
@@ -124,83 +151,120 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
       setResetPasswordLoading(false);
     }
   };
-  
+
   const userGroupsForSelect = USER_GROUPS.filter(g => g !== 'admin');
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit User' : 'Add New User'} size="2xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditing ? 'Edit User' : 'Add New User'}
+      size="2xl"
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <ErrorMessage message={error} />
         {!isEditing && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label htmlFor="user-name" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Full Name</label>
-                    <input 
-                        id="user-name"
-                        name="name" 
-                        value={formData.name || ''} 
-                        onChange={handleInputChange} 
-                        required 
-                        className={`mt-1 w-full ${TAILWIND_INPUT_CLASSES}`}
-                        autoComplete="name"
-                    />
-                </div>
-                <div>
-                    <label htmlFor="user-email" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Email</label>
-                    <input 
-                        id="user-email"
-                        type="email" 
-                        name="email" 
-                        value={formData.email || ''} 
-                        onChange={handleInputChange} 
-                        required 
-                        className={`mt-1 w-full ${TAILWIND_INPUT_CLASSES}`}
-                        autoComplete="email"
-                    />
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="user-name"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Full Name
+              </label>
+              <input
+                id="user-name"
+                name="name"
+                value={formData.name || ''}
+                onChange={handleInputChange}
+                required
+                className={`mt-1 w-full ${TAILWIND_INPUT_CLASSES}`}
+                autoComplete="name"
+              />
             </div>
+            <div>
+              <label
+                htmlFor="user-email"
+                className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+              >
+                Email
+              </label>
+              <input
+                id="user-email"
+                type="email"
+                name="email"
+                value={formData.email || ''}
+                onChange={handleInputChange}
+                required
+                className={`mt-1 w-full ${TAILWIND_INPUT_CLASSES}`}
+                autoComplete="email"
+              />
+            </div>
+          </div>
         )}
         {!isEditing && (
-            <div>
-                <label htmlFor="user-password" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Password</label>
-                <input 
-                    id="user-password"
-                    type="password" 
-                    name="password" 
-                    value={formData.password || ''} 
-                    onChange={handleInputChange} 
-                    required 
-                    minLength={6} 
-                    className={`mt-1 w-full ${TAILWIND_INPUT_CLASSES}`} 
-                    autoComplete="new-password"
-                />
-                <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">Minimum 6 characters.</p>
-            </div>
+          <div>
+            <label
+              htmlFor="user-password"
+              className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+            >
+              Password
+            </label>
+            <input
+              id="user-password"
+              type="password"
+              name="password"
+              value={formData.password || ''}
+              onChange={handleInputChange}
+              required
+              minLength={6}
+              className={`mt-1 w-full ${TAILWIND_INPUT_CLASSES}`}
+              autoComplete="new-password"
+            />
+            <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
+              Minimum 6 characters.
+            </p>
+          </div>
         )}
 
         <div>
-            <label htmlFor="user-role" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">User Group</label>
-            <select 
-                id="user-role"
-                name="role" 
-                value={formData.role || ''} 
-                onChange={handleRoleChange} 
-                required 
-                className={`mt-1 w-full ${TAILWIND_INPUT_CLASSES}`}
-            >
-                {user?.role === 'admin' && <option value="admin">Admin</option>}
-                {userGroupsForSelect.map(group => (
-                    <option key={group} value={group}>{group}</option>
-                ))}
-            </select>
+          <label
+            htmlFor="user-role"
+            className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
+          >
+            User Group
+          </label>
+          <select
+            id="user-role"
+            name="role"
+            value={formData.role || ''}
+            onChange={handleRoleChange}
+            required
+            className={`mt-1 w-full ${TAILWIND_INPUT_CLASSES}`}
+          >
+            {user?.role === 'admin' && <option value="admin">Admin</option>}
+            {userGroupsForSelect.map(group => (
+              <option key={group} value={group}>
+                {group}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <UserPermissionsForm selectedPermissions={formData.permissions || []} onPermissionChange={handlePermissionChange} />
+        <UserPermissionsForm
+          selectedPermissions={formData.permissions || []}
+          onPermissionChange={handlePermissionChange}
+        />
         {/* Password reset section for editing users (not self) */}
         {isEditing && user?.id && currentUser?.id !== user.id && (
           <div className="border-t border-secondary-200 dark:border-secondary-700 pt-4 mt-4">
-            <h4 className="text-md font-semibold text-secondary-800 dark:text-secondary-200 mb-2">Reset Password</h4>
-            <form onSubmit={handlePasswordReset} className="flex flex-col md:flex-row md:items-center gap-2">
+            <h4 className="text-md font-semibold text-secondary-800 dark:text-secondary-200 mb-2">
+              Reset Password
+            </h4>
+            <form
+              onSubmit={handlePasswordReset}
+              className="flex flex-col md:flex-row md:items-center gap-2"
+            >
               <input
                 type="password"
                 name="resetPassword"
@@ -218,12 +282,26 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
                 className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50"
                 disabled={resetPasswordLoading || !resetPassword}
               >
-                {resetPasswordLoading ? <LoadingSpinner className="w-5 h-5"/> : 'Reset Password'}
+                {resetPasswordLoading ? (
+                  <LoadingSpinner className="w-5 h-5" />
+                ) : (
+                  'Reset Password'
+                )}
               </button>
             </form>
-            {resetPasswordSuccess && <div className="text-green-600 dark:text-green-400 mt-2">{resetPasswordSuccess}</div>}
-            {resetPasswordError && <div className="text-red-600 dark:text-red-400 mt-2">{resetPasswordError}</div>}
-            <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">Minimum 6 characters.</p>
+            {resetPasswordSuccess && (
+              <div className="text-green-600 dark:text-green-400 mt-2">
+                {resetPasswordSuccess}
+              </div>
+            )}
+            {resetPasswordError && (
+              <div className="text-red-600 dark:text-red-400 mt-2">
+                {resetPasswordError}
+              </div>
+            )}
+            <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
+              Minimum 6 characters.
+            </p>
           </div>
         )}
         <ConfirmationModal
@@ -240,10 +318,27 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ isOpen, onClose, onSave, 
           </div>
         )}
         <div className="flex justify-end space-x-3 pt-4 border-t border-secondary-200 dark:border-secondary-700">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-secondary-700 dark:text-secondary-300 bg-secondary-100 dark:bg-secondary-600 rounded-md" disabled={isSaving}>Cancel</button>
-            <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50" disabled={isSaving}>
-                {isSaving ? <LoadingSpinner className="w-5 h-5"/> : (isEditing ? 'Save Changes' : 'Create User')}
-            </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-secondary-700 dark:text-secondary-300 bg-secondary-100 dark:bg-secondary-600 rounded-md"
+            disabled={isSaving}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50"
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <LoadingSpinner className="w-5 h-5" />
+            ) : isEditing ? (
+              'Save Changes'
+            ) : (
+              'Create User'
+            )}
+          </button>
         </div>
       </form>
     </Modal>

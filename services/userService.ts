@@ -1,14 +1,16 @@
-
-
-import { User, UserRole, AuditLogEntry } from '@/types';
 import { api } from './apiHelper';
 
-type UserCreationData = Omit<User, 'id' | 'token' | 'createdAt' | 'permissions'>;
+import { User, UserRole, AuditLogEntry } from '@/types';
+
+type UserCreationData = Omit<
+  User,
+  'id' | 'token' | 'createdAt' | 'permissions'
+>;
 type UserFilters = {
-    status?: string;
-    role?: string;
-    searchTerm?: string;
-}
+  status?: string;
+  role?: string;
+  searchTerm?: string;
+};
 
 export const userService = {
   getUsers: async (filters: UserFilters = {}): Promise<User[]> => {
@@ -19,26 +21,41 @@ export const userService = {
     const queryString = params.toString();
 
     const users: User[] = await api.get(`/users?${queryString}`);
-    return users.map(u => ({...u, permissions: u.permissions || [] }));
+    return users.map(u => ({ ...u, permissions: u.permissions || [] }));
   },
 
-  createUser: (userData: UserCreationData & { password?: string, permissions?: string[], role: UserRole }): Promise<User> => {
+  createUser: (
+    userData: UserCreationData & {
+      password?: string;
+      permissions?: string[];
+      role: UserRole;
+    }
+  ): Promise<User> => {
     return api.post('/users', userData);
   },
 
-  updateUser: (userId: number, data: { role?: UserRole, permissions?: string[] }): Promise<User> => {
+  updateUser: (
+    userId: number,
+    data: { role?: UserRole; permissions?: string[] }
+  ): Promise<User> => {
     return api.put(`/users/${userId}`, data);
   },
-  
-  updateUserStatus: (userId: number, status: 'active' | 'inactive'): Promise<User> => {
+
+  updateUserStatus: (
+    userId: number,
+    status: 'active' | 'inactive'
+  ): Promise<User> => {
     return api.put(`/users/${userId}/status`, { status });
   },
-  
+
   updateUserGroup: (userId: number, role: User['role']): Promise<User> => {
     return api.put(`/users/${userId}/group`, { role });
   },
-  
-  resetPassword: (userId: number, newPassword: string): Promise<{message: string}> => {
+
+  resetPassword: (
+    userId: number,
+    newPassword: string
+  ): Promise<{ message: string }> => {
     return api.put(`/users/${userId}/reset-password`, { newPassword });
   },
 
