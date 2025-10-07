@@ -308,6 +308,39 @@ const matchPassword = async (email, enteredPassword) => {
   return await bcrypt.compare(enteredPassword, user.password);
 };
 
+const updateUserPassword = async (userId, newPassword) => {
+  // Validate password strength
+  const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!PASSWORD_REGEX.test(newPassword)) {
+    throw new Error('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.');
+  }
+  
+  const pool = getPool();
+  const userToUpdate = await findUserById(userId);
+  if (!userToUpdate) throw new Error('User not found');
+
+  // Hash the new password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+  // Update password and invalidate all tokens
+  const res = await pool.query(
+    'UPDATE users SET password = $1, token_invalidated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *', 
+    [hashedPassword, userId]
+  );
+  
+  const updatedUser = mapToCamel(res.rows[0]);
+  
+  // Log the password change action
+  await logUserAction(userId, updatedUser.id, 'PASSWORD_CHANGED', { 
+    changedBy: 'self',
+    timestamp: new Date().toISOString()
+  });
+
+  delete updatedUser.password;
+  return updatedUser;
+};
+
 module.exports = {
   findUserByEmail,
   findUserById,
@@ -317,6 +350,7 @@ module.exports = {
   updateUserStatus,
   updateUserGroup,
   resetPassword,
+  updateUserPassword,
   deleteUser,
   matchPassword,
 };

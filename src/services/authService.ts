@@ -97,10 +97,24 @@ export const authService = {
     throw new Error('Could not validate session.');
   },
 
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    return api.post('/auth/forgot-password', { email });
+  },
+
   resetPassword: async (
-    email: string,
+    token: string,
     newPassword: string
   ): Promise<{ message: string }> => {
-    return api.post('/auth/reset-password', { email, newPassword });
+    return api.post('/auth/reset-password', { token, newPassword });
+  },
+
+  changePassword: async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ message: string }> => {
+    return api.post('/auth/change-password', { 
+      currentPassword, 
+      newPassword 
+    });
   },
 };

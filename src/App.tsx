@@ -24,6 +24,8 @@ import { initializeServiceWorker } from '@/utils/serviceWorker';
 
 // Lazy load page components using aliases
 const LoginPage = React.lazy(() => import('@/pages/LoginPage'));
+const ForgotPasswordPage = React.lazy(() => import('@/pages/ForgotPasswordPage'));
+const ResetPasswordPage = React.lazy(() => import('@/pages/ResetPasswordPage'));
 const DashboardPage = React.lazy(() => import('@/pages/DashboardPage'));
 const IncomingShipmentsPage = React.lazy(
   () => import('@/pages/IncomingShipmentsPage')
@@ -149,6 +151,8 @@ const MainApp: React.FC = () => {
         <Suspense fallback={<PageLoadingFallback />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route
               element={
                 <ProtectedRoute>

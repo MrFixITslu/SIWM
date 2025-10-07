@@ -29,6 +29,62 @@ const getAllInventoryItems = async () => {
   return res.rows.map(mapDbItemToAppItem);
 };
 
+// Get inventory items with pagination and department filtering
+const getInventoryItemsPaginated = async (page = 1, limit = 100, department = 'all') => {
+  const pool = getPool();
+  const offset = (page - 1) * limit;
+  
+  // Build query with optional department filter
+  let query = 'SELECT * FROM inventory_items';
+  const queryParams = [];
+  let paramIndex = 1;
+  
+  if (department && department !== 'all') {
+    query += ` WHERE department = $${paramIndex}`;
+    queryParams.push(department);
+    paramIndex++;
+  }
+  
+  query += ` ORDER BY name ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+  queryParams.push(limit, offset);
+  
+  // Get total count for pagination info
+  let countQuery = 'SELECT COUNT(*) as total FROM inventory_items';
+  const countParams = [];
+  
+  if (department && department !== 'all') {
+    countQuery += ' WHERE department = $1';
+    countParams.push(department);
+  }
+  
+  const [itemsResult, countResult] = await Promise.all([
+    pool.query(query, queryParams),
+    pool.query(countQuery, countParams)
+  ]);
+  
+  const totalItems = parseInt(countResult.rows[0].total);
+  const totalPages = Math.ceil(totalItems / limit);
+  
+  return {
+    items: itemsResult.rows.map(mapDbItemToAppItem),
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1
+    }
+  };
+};
+
+// Get unique departments for filter dropdown
+const getUniqueDepartments = async () => {
+  const pool = getPool();
+  const res = await pool.query('SELECT DISTINCT department FROM inventory_items WHERE department IS NOT NULL AND department != \'\' ORDER BY department ASC');
+  return res.rows.map(row => row.department);
+};
+
 const getInventoryItemById = async (id) => {
   const pool = getPool();
   const itemId = parseInt(id, 10);
@@ -279,6 +335,7 @@ const updateMissingSkus = async () => {
 
 module.exports = {
   getAllInventoryItems,
+  getInventoryItemsPaginated,
   getInventoryItemById,
   createInventoryItem,
   updateInventoryItem,
@@ -286,6 +343,7 @@ module.exports = {
   decreaseStock,
   manageSerials,
   getUniqueCategories,
+  getUniqueDepartments,
   getIncompleteInventoryItems,
   updateMissingSkus,
 };

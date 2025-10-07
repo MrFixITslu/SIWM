@@ -24,7 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import useConfirmationModal from '@/hooks/useConfirmationModal';
 import { useInventory } from '@/hooks/useInventory';
 import { asnService } from '@/services/asnService';
-import { inventoryService } from '@/services/inventoryService';
+import { inventoryService, PaginatedInventoryResponse, PaginationInfo } from '@/services/inventoryService';
 import { InventoryItem, ColumnDefinition } from '@/types';
 import { debounce } from '@/utils/performance';
 
@@ -95,6 +95,14 @@ const InventoryManagementPage: React.FC = () => {
   const [agedFilter, setAgedFilter] = useState<'all' | 'aged' | 'non-aged'>(
     'all'
   );
+
+  // Pagination and department filter state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [paginatedData, setPaginatedData] = useState<PaginatedInventoryResponse | null>(null);
+  const [isLoadingPaginated, setIsLoadingPaginated] = useState(false);
+  const [paginatedError, setPaginatedError] = useState<string | null>(null);
 
   const {
     isModalOpen: isConfirmDeleteOpen,
@@ -201,13 +209,58 @@ const InventoryManagementPage: React.FC = () => {
     }
   }, [lastUpdatedId, clearLastUpdatedId]);
 
+  // Load paginated inventory data
+  const loadPaginatedInventory = useCallback(async (page: number = 1, department: string = 'all') => {
+    setIsLoadingPaginated(true);
+    setPaginatedError(null);
+    try {
+      const data = await inventoryService.getInventoryItemsPaginated(page, 100, department);
+      setPaginatedData(data);
+    } catch (err: any) {
+      setPaginatedError(err.message || 'Failed to load inventory data');
+    } finally {
+      setIsLoadingPaginated(false);
+    }
+  }, []);
+
+  // Load departments for filter dropdown
+  const loadDepartments = useCallback(async () => {
+    try {
+      const depts = await inventoryService.getUniqueDepartments();
+      setDepartments(depts);
+    } catch (err: any) {
+      console.error('Failed to load departments:', err);
+    }
+  }, []);
+
+  // Load initial data
+  useEffect(() => {
+    loadPaginatedInventory(currentPage, selectedDepartment);
+    loadDepartments();
+  }, [loadPaginatedInventory, loadDepartments, currentPage, selectedDepartment]);
+
+  // Handle department filter change
+  const handleDepartmentChange = (department: string) => {
+    setSelectedDepartment(department);
+    setCurrentPage(1); // Reset to first page when changing department
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const filteredInventory = useMemo(() => {
-    let result = inventory;
+    // Use paginated data if available, otherwise fall back to context data
+    const items = paginatedData?.items || inventory;
+    let result = items;
+    
     if (agedFilter === 'aged') {
       result = result.filter(item => item.isAged);
     } else if (agedFilter === 'non-aged') {
       result = result.filter(item => !item.isAged);
     }
+    
     if (!debouncedSearchTerm.trim()) return result;
     const lower = debouncedSearchTerm.toLowerCase();
     return result.filter(
@@ -217,7 +270,7 @@ const InventoryManagementPage: React.FC = () => {
         item.category?.toLowerCase().includes(lower) ||
         item.location?.toLowerCase().includes(lower)
     );
-  }, [inventory, debouncedSearchTerm, agedFilter]);
+  }, [paginatedData?.items, inventory, debouncedSearchTerm, agedFilter]);
 
   const handleOpenItemModal = useCallback((item?: InventoryItem) => {
     setError(null);
@@ -328,7 +381,7 @@ const InventoryManagementPage: React.FC = () => {
     }));
   };
 
-  const handleDepartmentChange = (value: string) => {
+  const handleItemDepartmentChange = (value: string) => {
     setCurrentItem(prev => ({
       ...prev,
       department: value,
@@ -674,7 +727,16 @@ const InventoryManagementPage: React.FC = () => {
   const columns: ColumnDefinition<InventoryItem, keyof InventoryItem>[] =
     useMemo(
       () => [
-        { key: 'name', header: 'Item Name', sortable: true },
+        { 
+          key: 'name', 
+          header: 'Item Name', 
+          sortable: true,
+          render: item => (
+            <div className="whitespace-normal break-words max-w-xs">
+              {item.name}
+            </div>
+          )
+        },
         { key: 'sku', header: 'SKU', sortable: true },
         { key: 'category', header: 'Category', sortable: true },
         {
@@ -743,8 +805,10 @@ const InventoryManagementPage: React.FC = () => {
           </button>
         </div>
       }
+      className="h-screen flex flex-col"
     >
-      {/* Shipment Processing Banner */}
+      <div className="flex flex-col h-full">
+        {/* Shipment Processing Banner */}
       {asnId && (
         <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
           <div className="flex items-center justify-between">
@@ -837,6 +901,27 @@ const InventoryManagementPage: React.FC = () => {
             <option value="non-aged">Only Non-Aged</option>
           </select>
         </div>
+        <div className="mt-2 md:mt-0">
+          <label
+            htmlFor="department-filter"
+            className="mr-2 text-sm font-medium text-secondary-700 dark:text-secondary-300"
+          >
+            Department:
+          </label>
+          <select
+            id="department-filter"
+            value={selectedDepartment}
+            onChange={e => handleDepartmentChange(e.target.value)}
+            className="border border-secondary-300 dark:border-secondary-600 rounded-md px-2 py-1 text-sm bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
+          >
+            <option value="all">All Departments</option>
+            {departments.map(dept => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error && <ErrorMessage message={error} />}
@@ -886,7 +971,8 @@ const InventoryManagementPage: React.FC = () => {
         </div>
       )}
 
-      <Table
+      <div className="flex-1 flex flex-col min-h-0">
+        <Table
         columns={columns}
         data={filteredInventory}
         actions={renderTableActions}
@@ -896,6 +982,98 @@ const InventoryManagementPage: React.FC = () => {
             : ''
         }
       />
+
+      {/* Pagination Controls */}
+      {paginatedData && paginatedData.pagination.totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between bg-white dark:bg-secondary-800 px-4 py-3 border-t border-gray-200 dark:border-secondary-600">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={!paginatedData.pagination.hasPreviousPage}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-secondary-600 text-sm font-medium rounded-md text-gray-700 dark:text-secondary-300 bg-white dark:bg-secondary-700 hover:bg-gray-50 dark:hover:bg-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={!paginatedData.pagination.hasNextPage}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-secondary-600 text-sm font-medium rounded-md text-gray-700 dark:text-secondary-300 bg-white dark:bg-secondary-700 hover:bg-gray-50 dark:hover:bg-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700 dark:text-secondary-300">
+                Showing{' '}
+                <span className="font-medium">
+                  {(currentPage - 1) * paginatedData.pagination.itemsPerPage + 1}
+                </span>{' '}
+                to{' '}
+                <span className="font-medium">
+                  {Math.min(
+                    currentPage * paginatedData.pagination.itemsPerPage,
+                    paginatedData.pagination.totalItems
+                  )}
+                </span>{' '}
+                of{' '}
+                <span className="font-medium">{paginatedData.pagination.totalItems}</span>{' '}
+                results
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={!paginatedData.pagination.hasPreviousPage}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-sm font-medium text-gray-500 dark:text-secondary-400 hover:bg-gray-50 dark:hover:bg-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Previous</span>
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(5, paginatedData.pagination.totalPages) }, (_, i) => {
+                  const pageNum = Math.max(1, Math.min(
+                    paginatedData.pagination.totalPages - 4,
+                    currentPage - 2
+                  )) + i;
+                  
+                  if (pageNum > paginatedData.pagination.totalPages) return null;
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        pageNum === currentPage
+                          ? 'z-10 bg-primary-50 dark:bg-primary-900/20 border-primary-500 dark:border-primary-400 text-primary-600 dark:text-primary-400'
+                          : 'bg-white dark:bg-secondary-700 border-gray-300 dark:border-secondary-600 text-gray-500 dark:text-secondary-400 hover:bg-gray-50 dark:hover:bg-secondary-600'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!paginatedData.pagination.hasNextPage}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-sm font-medium text-gray-500 dark:text-secondary-400 hover:bg-gray-50 dark:hover:bg-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Next</span>
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
 
       {/* Item Modal */}
       <Modal
@@ -967,7 +1145,7 @@ const InventoryManagementPage: React.FC = () => {
                 id="item-department"
                 name="department"
                 value={currentItem.department || ''}
-                onChange={e => handleDepartmentChange(e.target.value)}
+                onChange={e => handleItemDepartmentChange(e.target.value)}
                 className={TAILWIND_INPUT_CLASSES}
                 required
               >
@@ -1140,6 +1318,7 @@ const InventoryManagementPage: React.FC = () => {
         onClose={() => setIsExcelUploadModalOpen(false)}
         onUploadComplete={handleExcelUploadComplete}
       />
+      </div>
     </PageContainer>
   );
 };

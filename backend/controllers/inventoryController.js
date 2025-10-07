@@ -15,6 +15,44 @@ const getInventoryItems = async (req, res, next) => {
   }
 };
 
+// @desc    Fetch inventory items with pagination and department filtering
+// @route   GET /api/v1/inventory/paginated
+// @access  Public (or Private based on app requirements)
+const getInventoryItemsPaginated = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const department = req.query.department || 'all';
+    
+    // Validate pagination parameters
+    if (page < 1) {
+      res.status(400);
+      return next(new Error('Page number must be greater than 0'));
+    }
+    if (limit < 1 || limit > 1000) {
+      res.status(400);
+      return next(new Error('Limit must be between 1 and 1000'));
+    }
+    
+    const result = await inventoryService.getInventoryItemsPaginated(page, limit, department);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get unique departments for filtering
+// @route   GET /api/v1/inventory/departments
+// @access  Public (or Private based on app requirements)
+const getUniqueDepartments = async (req, res, next) => {
+  try {
+    const departments = await inventoryService.getUniqueDepartments();
+    res.json(departments);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Create a new inventory item
 // @route   POST /api/v1/inventory
 // @access  Private
@@ -190,6 +228,8 @@ const updateMissingSkus = async (req, res, next) => {
 
 module.exports = {
   getInventoryItems,
+  getInventoryItemsPaginated,
+  getUniqueDepartments,
   createInventoryItem,
   getInventoryItemById,
   updateInventoryItem,

@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Link } from 'react-router-dom';
 
 import { authService } from '../services/authService';
 
@@ -18,11 +18,6 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(false);
-  const [showReset, setShowReset] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetPassword, setResetPassword] = useState('');
-  const [resetMessage, setResetMessage] = useState<string | null>(null);
-  const [resetError, setResetError] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -123,109 +118,13 @@ const LoginPage: React.FC = () => {
 
           {/* Forgot Password Link */}
           <div className="mt-4 text-center">
-            <button
-              type="button"
+            <Link
+              to="/forgot-password"
               className="text-sm text-primary-600 hover:underline"
-              onClick={() => setShowReset(true)}
             >
               Forgot Password?
-            </button>
+            </Link>
           </div>
-          {/* Reset Password Modal/Section */}
-          {showReset && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-              <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-lg p-6 w-full max-w-sm">
-                <h2 className="text-lg font-semibold mb-4 text-secondary-900 dark:text-secondary-100">
-                  Reset Password
-                </h2>
-                {resetMessage ? (
-                  <div className="mb-4 text-green-600 dark:text-green-400">
-                    {resetMessage}
-                  </div>
-                ) : (
-                  <form
-                    onSubmit={async e => {
-                      e.preventDefault();
-                      setResetError(null);
-                      setResetMessage(null);
-                      try {
-                        const res = await authService.resetPassword(
-                          resetEmail,
-                          resetPassword
-                        );
-                        setResetMessage(res.message);
-                      } catch (err: any) {
-                        setResetError(
-                          err.message || 'Failed to reset password.'
-                        );
-                      }
-                    }}
-                    className="space-y-4"
-                  >
-                    <div>
-                      <label
-                        htmlFor="reset-email"
-                        className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
-                      >
-                        Email
-                      </label>
-                      <input
-                        id="reset-email"
-                        type="email"
-                        value={resetEmail}
-                        onChange={e => setResetEmail(e.target.value)}
-                        required
-                        className="mt-1 block w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="reset-password"
-                        className="block text-sm font-medium text-secondary-700 dark:text-secondary-300"
-                      >
-                        New Password
-                      </label>
-                      <input
-                        id="reset-password"
-                        type="password"
-                        value={resetPassword}
-                        onChange={e => setResetPassword(e.target.value)}
-                        required
-                        minLength={6}
-                        className="mt-1 block w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100"
-                      />
-                    </div>
-                    {resetError && (
-                      <div className="text-red-600 dark:text-red-400 text-sm">
-                        {resetError}
-                      </div>
-                    )}
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-secondary-700 dark:text-secondary-200"
-                        onClick={() => {
-                          setShowReset(false);
-                          setResetMessage(null);
-                          setResetError(null);
-                          setResetEmail('');
-                          setResetPassword('');
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-primary-600 text-white rounded-md"
-                      >
-                        Reset
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            </div>
-          )}
         </PageContainer>
       </div>
     </div>

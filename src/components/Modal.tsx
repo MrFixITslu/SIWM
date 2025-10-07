@@ -76,7 +76,7 @@ const Modal: React.FC<ModalProps> = ({
               <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
-          <div ref={ref} className="p-4 sm:p-6 max-h-[70vh] overflow-y-auto">
+          <div ref={ref} className="p-4 sm:p-6 max-h-[70vh] overflow-hidden">
             {children}
           </div>
         </div>

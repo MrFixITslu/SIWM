@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const {
     getInventoryItems,
+    getInventoryItemsPaginated,
+    getUniqueDepartments,
     createInventoryItem,
     getInventoryItemById,
     updateInventoryItem,
@@ -20,9 +22,16 @@ router.route('/')
     .get(protect, authorize(...ALL_ROLES), getInventoryItems)
     .post(protect, authorize('admin', 'manager', 'Warehouse', 'Technician'), createInventoryItem);
 
+// Paginated inventory with department filtering
+router.route('/paginated')
+    .get(protect, authorize(...ALL_ROLES), getInventoryItemsPaginated);
+
 // Specific data routes (e.g., for populating filters)
 router.route('/data/categories')
     .get(protect, authorize(...ALL_ROLES), getUniqueCategories);
+
+router.route('/data/departments')
+    .get(protect, authorize(...ALL_ROLES), getUniqueDepartments);
 
 router.route('/incomplete')
     .get(protect, authorize(...ALL_ROLES), getIncompleteInventoryItems);
