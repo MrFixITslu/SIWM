@@ -94,11 +94,11 @@ For a detailed, step-by-step user guide, see the in-app **Help** page (accessibl
 
 ## Deployment (Docker)
 
-This app runs as two containers behind a single published port:
+This app runs as three containers on a Docker network shared with Nginx Proxy Manager (`proxy_network`):
 
-- **frontend** — nginx serving the built React app, published on host port **3050**. It also proxies any `/api/` request to the backend container internally, so the browser only ever talks to port 3050.
-- **backend** — the Express API, not published to the host; only reachable from `frontend` over the internal Docker network.
-- **postgres** / **redis** — internal only, no host ports published.
+- **frontend** — nginx serving the built React app. Published on host port **3060** for direct access, and also joined to `proxy_network` so Nginx Proxy Manager can reach it directly by container name (`siwm-frontend-1`) without going through the host port at all. It proxies any `/api/` request to the backend container internally.
+- **backend** — the Express API. Internal only; never joins `proxy_network` and has no host port. Only reachable from `frontend` over the internal `internal` network.
+- **postgres** — dedicated to SIWM. Internal only, no host port published.
 
 ### 1. Configure environment
 
@@ -114,22 +114,32 @@ Edit `.env` and set `DB_PASSWORD`, `JWT_SECRET` (generate one with `node generat
 docker compose up -d --build
 ```
 
-### 3. Access the app
+This expects an external Docker network named `proxy_network` to already exist (created by Nginx Proxy Manager). If it doesn't exist yet on your host, create it first:
 
-Visit `http://<your-server>:3050`. If you're running this behind Nginx Proxy Manager, point the proxy host's "Forward Port" at **3050** (or whichever host port you chose in `docker-compose.yml`).
+```bash
+docker network create proxy_network
+```
+
+### 3. Point Nginx Proxy Manager at it
+
+Add a Proxy Host in NPM for `siwm.v79sl.duckdns.org`:
+- **Forward Hostname/IP:** `siwm-frontend-1` (the container name)
+- **Forward Port:** `80` (the container's internal nginx port — not 3060)
+
+Because NPM and the frontend container share `proxy_network`, NPM talks to the container directly; the 3060 host port is only there for testing via `http://<server-ip>:3060` if you need it.
 
 Users can be created via the "Register" link on the login page.
 
 ### Changing the port
 
-To use a different host port than 3050, edit the `frontend.ports` line in `docker-compose.yml`:
+To use a different host port than 3060, edit the `frontend.ports` line in `docker-compose.yml`:
 
 ```yaml
 ports:
   - "YOUR_PORT:80"
 ```
 
-The container always listens on 80 internally — only the left-hand side (host port) needs to change.
+The container always listens on 80 internally — only the left-hand side (host port) needs to change, and it has no effect on the NPM/`proxy_network` path above.
 
 ### Database migrations
 
@@ -138,6 +148,13 @@ Run once after the first `docker compose up`:
 ```bash
 docker compose exec backend npm run migrate:up
 ```
+
+### Troubleshooting a 502 from Nginx Proxy Manager
+
+A 502 almost always means NPM can't reach the container. Check:
+1. `docker network inspect proxy_network` — confirm `siwm-frontend-1` is listed as a member.
+2. The NPM proxy host's "Forward Port" is `80` (the container's internal port), not `3060` (the host-published port) — those are different paths.
+3. `docker compose ps` — confirm the frontend container is actually running and healthy.
 
 ---
 

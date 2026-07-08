@@ -1,21 +1,23 @@
 services:
-  # Frontend - serves the built React app and proxies /api/ to the backend.
-  # Exposed on host port 3050 (change the left-hand side if you need a
-  # different host port; the container itself always listens on 80).
+  # Frontend - nginx serving the built React app, proxying /api/ to backend.
+  # On proxy_network so Nginx Proxy Manager can reach it by container name
+  # (siwm-frontend-1) over the Docker network - no host port strictly
+  # required for that, but we also publish 3060 for direct IP:port access.
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3050:80"
+      - "3060:80"
     depends_on:
       - backend
     restart: unless-stopped
     networks:
-      - app-network
+      - internal
+      - proxy_network
 
-  # Backend API - not published to the host; only reachable from other
-  # containers on app-network (the frontend's nginx proxies to it).
+  # Backend API - internal only, never touches proxy_network. Only
+  # reachable from frontend/postgres over the internal network.
   backend:
     build:
       context: ./backend
@@ -30,19 +32,17 @@ services:
       - DB_PORT=5432
       - DB_NAME=${DB_NAME}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - REDIS_URL=redis://redis:6379
       - EMAIL_HOST=${EMAIL_HOST}
       - EMAIL_PORT=${EMAIL_PORT}
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
     depends_on:
       - postgres
-      - redis
     networks:
-      - app-network
+      - internal
     restart: unless-stopped
 
-  # PostgreSQL - internal only, no host port published.
+  # Postgres - dedicated to SIWM, internal only, no host port published.
   postgres:
     image: postgres:15-alpine
     environment:
@@ -53,22 +53,14 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/create_system_settings_table.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - app-network
-    restart: unless-stopped
-
-  # Redis - internal only, no host port published.
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-    networks:
-      - app-network
+      - internal
     restart: unless-stopped
 
 volumes:
   postgres_data:
-  redis_data:
 
 networks:
-  app-network:
+  internal:
     driver: bridge
+  proxy_network:
+    external: true
