@@ -1,27 +1,11 @@
 services:
-  # Frontend - nginx serving the built React app, proxying /api/ to backend.
-  # On proxy_network so Nginx Proxy Manager can reach it by container name
-  # (siwm-frontend-1) over the Docker network - no host port strictly
-  # required for that, but we also publish 3060 for direct IP:port access.
-  frontend:
+  siwm:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: siwm
     ports:
       - "3060:80"
-    depends_on:
-      - backend
-    restart: unless-stopped
-    networks:
-      - internal
-      - proxy_network
-
-  # Backend API - internal only, never touches proxy_network. Only
-  # reachable from frontend/postgres over the internal network.
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
       - PORT=4000
@@ -40,9 +24,9 @@ services:
       - postgres
     networks:
       - internal
+      - proxy_network
     restart: unless-stopped
 
-  # Postgres - dedicated to SIWM, internal only, no host port published.
   postgres:
     image: postgres:15-alpine
     environment:
