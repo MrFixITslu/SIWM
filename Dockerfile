@@ -8,21 +8,18 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-RUN apk add --no-cache nginx netcat-openbsd
+RUN apk add --no-cache netcat-openbsd wget
 
 COPY --from=builder /app/dist /app/dist
 COPY backend /app/backend
-COPY nginx.conf /etc/nginx/nginx.conf
 COPY start-container.sh /start-container.sh
 
 RUN cd /app/backend && npm ci --omit=dev \
-    && chmod +x /start-container.sh \
-    && mkdir -p /run/nginx
+    && chmod +x /start-container.sh
 
-EXPOSE 80
 EXPOSE 4000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost/ || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
+  CMD wget -qO- http://127.0.0.1:4000 || exit 1
 
 CMD ["/start-container.sh"]
