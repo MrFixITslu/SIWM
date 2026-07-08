@@ -44,7 +44,6 @@ export default defineConfig({
           router: ['react-router-dom'],
           charts: ['recharts'],
           forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
-          ui: ['lucide-react', 'react-hot-toast'],
         },
         // Optimize chunk names for production
         chunkFileNames: 'assets/[name]-[hash].js',

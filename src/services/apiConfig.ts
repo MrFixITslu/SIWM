@@ -7,41 +7,19 @@
  * and set the VITE_API_BASE_URL variable.
  * Example for development: VITE_API_BASE_URL=http://localhost:3000/api/v1
  */
-// Proper type definition for Vite environment variables
-interface ImportMetaEnv {
-  readonly VITE_API_BASE_URL?: string;
-}
-
-// Interface for import.meta (used by TypeScript compiler)
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
-}
-
-const viteEnv: ImportMetaEnv | undefined =
-  typeof import.meta !== 'undefined' ? import.meta.env : undefined;
-
 // Dynamic API URL detection for network access
 function getApiBaseUrl(): string {
-  // If environment variable is set, use it
-  if (viteEnv?.VITE_API_BASE_URL) {
-    return viteEnv.VITE_API_BASE_URL;
+  // If environment variable is set, use it (Vite's own ImportMetaEnv typing
+  // is provided by the "vite/client" types entry in tsconfig.json).
+  const configuredUrl = import.meta.env?.VITE_API_BASE_URL as string | undefined;
+  if (configuredUrl) {
+    return configuredUrl;
   }
 
-  // For development, detect if we're accessing from a remote device
-  if (typeof window !== 'undefined') {
-    const currentHost = window.location.hostname;
-
-    // If accessing from a remote IP (not localhost), use the same IP for backend
-    if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-      console.log(
-        `[API Config] Detected remote access from ${currentHost}, using same host for backend`
-      );
-      return `http://${currentHost}:3000/api/v1`;
-    }
-  }
-
-  // Default fallback
-  return 'http://localhost:3000/api/v1';
+  // Default: relative path. In production this is served by the same nginx
+  // container that serves the frontend, which proxies /api/ to the backend
+  // service (see nginx.conf). This avoids hardcoding any host or port.
+  return '/api/v1';
 }
 
 export const BASE_API_URL = getApiBaseUrl();

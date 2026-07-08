@@ -1,46 +1,37 @@
-# Multi-stage build for production
-FROM node:18-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+# ---- Build stage ----
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Install ALL deps (including dev deps) - needed because the build step
+# runs the TypeScript compiler and Vite, which are devDependencies.
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build the application
+# Backend-facing API calls go through nginx at a relative /api/v1 path
+# (see nginx.conf), so no build-time API URL needs to be injected here.
 RUN npm run build
 
-# Production image, copy all the files and run the app
+# ---- Runtime stage ----
 FROM nginx:alpine AS runner
-WORKDIR /app
 
-ENV NODE_ENV production
-
-# Create a non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy the built application
+# Copy the built static assets
 COPY --from=builder /app/dist /app/dist
 
-# Copy nginx configuration
+# Custom nginx config: serves the SPA and proxies /api/ to the backend service
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Set proper permissions
-RUN chown -R nextjs:nodejs /app
-USER nextjs
+# nginx:alpine already ships with an unprivileged "nginx" user; just make
+# sure it can write to the directories nginx needs at runtime.
+RUN mkdir -p /var/cache/nginx /var/run \
+  && chown -R nginx:nginx /var/cache/nginx /var/run /app/dist /etc/nginx/nginx.conf
+
+USER nginx
 
 EXPOSE 80
 
-# Start the application
-CMD ["nginx", "-g", "daemon off;"] 
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -qO- http://localhost:80/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

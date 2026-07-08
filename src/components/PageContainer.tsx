@@ -5,6 +5,7 @@ interface PageContainerProps {
   actions?: React.ReactNode; // Optional action buttons like "Add New"
   children: React.ReactNode;
   titleClassName?: string; // Optional prop for title styling
+  className?: string; // Optional extra classes for the outer container
 }
 
 const PageContainer: React.FC<PageContainerProps> = ({
@@ -12,9 +13,10 @@ const PageContainer: React.FC<PageContainerProps> = ({
   actions,
   children,
   titleClassName,
+  className,
 }) => {
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${className || ''}`.trim()}>
       {title && (
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1

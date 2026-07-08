@@ -24,7 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import useConfirmationModal from '@/hooks/useConfirmationModal';
 import { useInventory } from '@/hooks/useInventory';
 import { asnService } from '@/services/asnService';
-import { inventoryService, PaginatedInventoryResponse, PaginationInfo } from '@/services/inventoryService';
+import { inventoryService, PaginatedInventoryResponse } from '@/services/inventoryService';
 import { InventoryItem, ColumnDefinition } from '@/types';
 import { debounce } from '@/utils/performance';
 
@@ -101,8 +101,11 @@ const InventoryManagementPage: React.FC = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [departments, setDepartments] = useState<string[]>([]);
   const [paginatedData, setPaginatedData] = useState<PaginatedInventoryResponse | null>(null);
-  const [isLoadingPaginated, setIsLoadingPaginated] = useState(false);
-  const [paginatedError, setPaginatedError] = useState<string | null>(null);
+  // Only the setters are used today (loading/error state isn't wired into the
+  // UI yet); keeping just the setters avoids an unused-variable build error
+  // without changing behavior.
+  const [, setIsLoadingPaginated] = useState(false);
+  const [, setPaginatedError] = useState<string | null>(null);
 
   const {
     isModalOpen: isConfirmDeleteOpen,

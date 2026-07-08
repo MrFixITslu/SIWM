@@ -1,7 +1,6 @@
 import React, { useState, FormEvent } from 'react';
 import { Navigate, useLocation, Link } from 'react-router-dom';
 
-import { authService } from '../services/authService';
 
 import LoadingSpinner from '@/components/icons/LoadingSpinner';
 import LoginBackground from '@/components/LoginBackground';
