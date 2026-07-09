@@ -1,6 +1,7 @@
 services:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   siwm:
     build:
       context: .
@@ -9,6 +10,8 @@ services:
     ports:
       - "3060:4000"
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   frontend:
@@ -33,6 +36,9 @@ services:
     expose:
       - "4000"
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
