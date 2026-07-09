@@ -1,14 +1,13 @@
-
-
 const nodemailer = require('nodemailer');
 
-let transporter;
+let defaultTransporter;
+const dynamicTransporters = new Map();
 
-// Check if all necessary environment variables are set.
+// Check if all necessary environment variables are set for global fallback.
 const isEmailConfigured = process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS;
 
 if (isEmailConfigured) {
-    transporter = nodemailer.createTransport({
+    defaultTransporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT || '587', 10),
         secure: parseInt(process.env.EMAIL_PORT || '587', 10) === 465, // true for 465, false for other ports
@@ -21,55 +20,115 @@ if (isEmailConfigured) {
         socketTimeout: 10000,
     });
     
-    // Verify connection configuration
-    transporter.verify()
-      .then(() => console.log('Email service is configured and ready to send emails.'))
+    // Verify default connection configuration
+    defaultTransporter.verify()
+      .then(() => console.log('Global fallback email service is configured and ready.'))
       .catch(err => {
-        console.error('--- EMAIL SERVICE VERIFICATION FAILED ---');
-        if (err.code === 'EAUTH') {
-            console.error('Authentication Error: The username or password in your .env file is incorrect.');
-            console.error('HINT: If you are using Gmail, you may need to generate and use an "App Password" instead of your regular password. Please see the README.md for instructions.');
-        } else if (err.code === 'ECONNECTION') {
-            console.error('Connection Error: Could not connect to the email server. Check EMAIL_HOST and EMAIL_PORT in your .env file.');
-        } else {
-            console.error('An unknown error occurred during email service verification. Please check all EMAIL_* variables in your .env file.');
-        }
+        console.error('--- GLOBAL EMAIL SERVICE VERIFICATION FAILED ---');
         console.error('Full error details:', err.message);
         console.error('------------------------------------------');
     });
-
-} else {
-    // This warning is now also handled in server.js for better visibility on startup.
-    // console.warn('Email service is not configured. Emails will not be sent.');
 }
 
 /**
- * Sends an email using the configured transporter.
+ * Gets a cached or new transporter for the given SMTP configuration.
+ */
+const getDynamicTransporter = (config) => {
+    const cacheKey = `${config.host}:${config.port}:${config.auth.user}`;
+    if (dynamicTransporters.has(cacheKey)) {
+        return dynamicTransporters.get(cacheKey);
+    }
+    
+    console.log(`[EmailService] Creating new dynamic transporter for ${config.host}:${config.port} (${config.auth.user})`);
+    const transporter = nodemailer.createTransport({
+        host: config.host,
+        port: config.port,
+        secure: config.secure,
+        auth: {
+            user: config.auth.user,
+            pass: config.auth.pass,
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
+    });
+    
+    dynamicTransporters.set(cacheKey, transporter);
+    return transporter;
+};
+
+/**
+ * Sends an email using a dynamic or fallback SMTP transporter.
  * @param {object} mailData - The email data.
  * @param {string} mailData.to - The recipient's email address.
  * @param {string} mailData.subject - The subject of the email.
  * @param {string} mailData.html - The HTML body of the email.
+ * @param {number|string} [mailData.warehouseId] - Optional warehouse ID to load specific SMTP settings.
  */
-const sendEmail = async ({ to, subject, html }) => {
-    if (!isEmailConfigured || !transporter) {
-        console.warn(`Email not sent to <${to}> with subject "${subject}" because email service is not configured.`);
+const sendEmail = async ({ to, subject, html, warehouseId }) => {
+    let smtpConfig = null;
+    let transporterToUse = defaultTransporter;
+    let fromName = process.env.EMAIL_FROM_NAME || 'Vision79 Shipping, Inventory & Warehouse Management';
+    let fromEmail = process.env.EMAIL_USER;
+
+    // 1. Try to load dynamic database-driven SMTP config for the specified warehouse
+    if (warehouseId) {
+        try {
+            const { getPool } = require('../config/db');
+            const db = getPool();
+            const result = await db.query(
+                'SELECT smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure, smtp_from_name FROM warehouses WHERE id = $1',
+                [warehouseId]
+            );
+            
+            if (result && result.rows && result.rows.length > 0) {
+                const wh = result.rows[0];
+                if (wh.smtp_host && wh.smtp_user && wh.smtp_pass) {
+                    smtpConfig = {
+                        host: wh.smtp_host,
+                        port: parseInt(wh.smtp_port || '587', 10),
+                        secure: wh.smtp_secure || parseInt(wh.smtp_port || '587', 10) === 465,
+                        auth: {
+                            user: wh.smtp_user,
+                            pass: wh.smtp_pass,
+                        },
+                        fromName: wh.smtp_from_name || wh.name
+                    };
+                    console.log(`[EmailService] Loaded database-driven SMTP config for Warehouse ID ${warehouseId}`);
+                }
+            }
+        } catch (e) {
+            console.error(`[EmailService] Error fetching SMTP config for warehouse ${warehouseId}:`, e.message);
+        }
+    }
+
+    // 2. Decide which transporter and from details to use
+    if (smtpConfig) {
+        transporterToUse = getDynamicTransporter(smtpConfig);
+        fromEmail = smtpConfig.auth.user;
+        if (smtpConfig.fromName) {
+            fromName = smtpConfig.fromName;
+        }
+    }
+
+    if (!transporterToUse) {
+        console.warn(`[EmailService] Email not sent to <${to}> with subject "${subject}" because no valid SMTP configuration was found (either per-warehouse or global fallback).`);
         return;
     }
 
     try {
         const mailOptions = {
-            from: `"${process.env.EMAIL_FROM_NAME || 'Vision79 Shipping, Inventory & Warehouse Management'}" <${process.env.EMAIL_USER}>`,
+            from: `"${fromName}" <${fromEmail}>`,
             to,
             subject,
             html,
         };
         
-        let info = await transporter.sendMail(mailOptions);
-        console.log(`Email sent successfully to <${to}> with Message ID: ${info.messageId}`);
+        let info = await transporterToUse.sendMail(mailOptions);
+        console.log(`[EmailService] Email sent successfully using ${smtpConfig ? `warehouse ${warehouseId} dynamic SMTP` : 'global fallback SMTP'} to <${to}>. Message ID: ${info.messageId}`);
+        return info;
     } catch (error) {
-        console.error(`Error sending email to <${to}>:`, error);
-        // We log the error but do not re-throw it. This prevents an email failure
-        // from crashing a larger process (e.g., creating an ASN).
+        console.error(`[EmailService] Error sending email to <${to}>:`, error);
     }
 };
 

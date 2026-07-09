@@ -175,6 +175,14 @@ const startApp = async () => {
     // 1. Connect to Database first
     await connectDB();
 
+    // Run SMTP column migrations for warehouses table if applicable
+    try {
+      const { addSmtpColumnsWarehouse } = require('./add-smtp-columns-warehouse');
+      await addSmtpColumnsWarehouse();
+    } catch (migErr) {
+      console.warn('[Migration Warning] Could not run SMTP columns migration:', migErr.message);
+    }
+
     // 2. Initialize Scheduled AI Service (only in non-test environment)
     if (process.env.NODE_ENV !== 'test') {
       const scheduledAiService = require('./services/scheduledAiService');

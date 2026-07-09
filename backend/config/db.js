@@ -23,8 +23,8 @@ const mockDb = {
     }
   ],
   warehouses: [
-    { id: 1, name: 'Seattle Main Hub', code: 'WH-SEA-01', location: 'Seattle, WA', capacity: 10000, status: 'active' },
-    { id: 2, name: 'New York Distribution', code: 'WH-NY-02', location: 'New York, NY', capacity: 5000, status: 'active' }
+    { id: 1, name: 'Seattle Main Hub', code: 'WH-SEA-01', location: 'Seattle, WA', capacity: 10000, status: 'active', email: 'seattle@company.com', smtp_host: 'smtp.seattle.com', smtp_port: 587, smtp_user: 'seattle@company.com', smtp_pass: 'password', smtp_secure: false, smtp_from_name: 'Seattle Main Hub' },
+    { id: 2, name: 'New York Distribution', code: 'WH-NY-02', location: 'New York, NY', capacity: 5000, status: 'active', email: 'ny@company.com', smtp_host: 'smtp.ny.com', smtp_port: 465, smtp_user: 'ny@company.com', smtp_pass: 'password', smtp_secure: true, smtp_from_name: 'New York Distribution' }
   ],
   inventory_items: [
     { id: 1, name: 'SFP+ 10G Transceiver', sku: 'TRX-10G-SFP', category: 'Transceivers', quantity: 150, unit: 'pcs', reorder_point: 50, safety_stock: 20, status: 'active', warehouse_id: 1, primary_vendor_id: 1 },

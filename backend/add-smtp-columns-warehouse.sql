@@ -1,0 +1,7 @@
+-- Add SMTP configuration columns to warehouses table
+ALTER TABLE warehouses ADD COLUMN IF NOT EXISTS smtp_host VARCHAR(255);
+ALTER TABLE warehouses ADD COLUMN IF NOT EXISTS smtp_port INTEGER;
+ALTER TABLE warehouses ADD COLUMN IF NOT EXISTS smtp_user VARCHAR(255);
+ALTER TABLE warehouses ADD COLUMN IF NOT EXISTS smtp_pass VARCHAR(255);
+ALTER TABLE warehouses ADD COLUMN IF NOT EXISTS smtp_secure BOOLEAN DEFAULT FALSE;
+ALTER TABLE warehouses ADD COLUMN IF NOT EXISTS smtp_from_name VARCHAR(255);

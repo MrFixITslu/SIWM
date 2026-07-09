@@ -17,6 +17,12 @@ CREATE TABLE IF NOT EXISTS warehouses (
     capacity_sqft INTEGER,
     status VARCHAR(20) DEFAULT 'active', -- active, inactive, maintenance
     timezone VARCHAR(50) DEFAULT 'UTC',
+    smtp_host VARCHAR(255),
+    smtp_port INTEGER,
+    smtp_user VARCHAR(255),
+    smtp_pass VARCHAR(255),
+    smtp_secure BOOLEAN DEFAULT FALSE,
+    smtp_from_name VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
