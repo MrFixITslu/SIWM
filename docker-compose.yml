@@ -1,4 +1,5 @@
 services:
+<<<<<<< Updated upstream
   siwm:
     build:
       context: .
@@ -6,6 +7,29 @@ services:
     container_name: siwm
     ports:
       - "3060:4000"
+=======
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: siwm-frontend
+    ports:
+      - "3060:80"
+    depends_on:
+      - backend
+    networks:
+      - internal
+      - proxy_network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: siwm-backend
+    expose:
+      - "4000"
+>>>>>>> Stashed changes
     environment:
       - NODE_ENV=production
       - PORT=4000

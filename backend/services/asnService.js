@@ -130,7 +130,7 @@ const createASN = async (asnData) => { // Expects camelCase
     // --- Send Email Notification ---
     try {
         const { sendNotificationToEnabledUsers } = require('./notificationHelper');
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://siwm.v79sl.duckdns.org';
         const subject = `New Incoming Shipment - ${newASN.poNumber}`;
         const htmlBody = `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">

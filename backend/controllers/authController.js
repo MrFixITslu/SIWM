@@ -261,7 +261,7 @@ const forgotPassword = async (req, res, next) => {
       
       // Send email with reset link
       const { sendEmail } = require('../services/emailService');
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5176';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://siwm.v79sl.duckdns.org';
       
       await sendEmail({
         to: user.email,

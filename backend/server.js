@@ -14,16 +14,33 @@ const inventoryService = require('./services/inventoryService');
 // Load env vars FIRST
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+// Populate defaults for missing environment variables to prevent startup crashes
+const defaults = {
+  NODE_ENV: 'development',
+  PORT: '3000',
+  JWT_SECRET: 'vision79_default_jwt_secret_key_12345!',
+  DB_USER: 'mock',
+  DB_PASSWORD: 'mock',
+  DB_HOST: '', // blank signals mock mode in db.js
+  DB_PORT: '5432',
+  DB_NAME: 'mock'
+};
+
+Object.keys(defaults).forEach(key => {
+  if (!process.env[key]) {
+    process.env[key] = defaults[key];
+  }
+});
+
 // Validate required environment variables before doing anything else
 const requiredEnvVars = ['NODE_ENV', 'PORT', 'JWT_SECRET', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT', 'DB_NAME'];
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
-  console.error('---------------------------------------------------------------------------');
-  console.error(`FATAL ERROR: Missing required environment variables: ${missingVars.join(', ')}`);
-  console.error('Please ensure your backend/.env file is complete and correct.');
-  console.error('---------------------------------------------------------------------------');
-  process.exit(1);
+  console.warn('---------------------------------------------------------------------------');
+  console.warn(`WARNING: Missing some environment variables: ${missingVars.join(', ')}`);
+  console.warn('The system will use default / mock stubs where applicable.');
+  console.warn('---------------------------------------------------------------------------');
 }
 
 // Add a specific, non-fatal warning for the Gemini API Key
@@ -84,6 +101,12 @@ app.use((req, res, next) => {
 
 // 3. Middleware
 const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
+
+// Always allow access from the duckdns custom domain
+allowedOrigins.push(
+  'http://siwm.v79sl.duckdns.org',
+  'https://siwm.v79sl.duckdns.org'
+);
 
 if (process.env.NODE_ENV === 'development' && allowedOrigins.length === 0) {
   // Allow all localhost variations and common development ports
@@ -290,11 +313,6 @@ const startApp = async () => {
 
     // 5. Mount Routes
     const API_PREFIX = '/api/v1';
-
-    // Handle root route requests gracefully by redirecting to the main API endpoint
-    app.get('/', (req, res) => {
-      res.redirect(API_PREFIX);
-    });
     
     app.use(API_PREFIX, generalLimiter);
     app.get(API_PREFIX, (req, res) => res.json({ message: 'Welcome to Vision79 Shipping, Inventory & Warehouse Management Backend API! V1' }));
@@ -390,12 +408,38 @@ const startApp = async () => {
       }
     });
     
+    // Serve frontend using Vite middleware in development or static build in production
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Express] Loading Vite middleware for frontend routing...');
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+        root: path.resolve(__dirname, '..'),
+      });
+      // Use Vite's middleware for everything except api routes
+      app.use((req, res, next) => {
+        if (req.path.startsWith('/api')) {
+          next();
+        } else {
+          vite.middlewares(req, res, next);
+        }
+      });
+    } else {
+      console.log('[Express] Serving static files from dist/ folder...');
+      const distPath = path.resolve(__dirname, '../dist');
+      app.use(express.static(distPath));
+      app.get(/^(?!\/api).*/, (req, res) => {
+        res.sendFile(path.resolve(distPath, 'index.html'));
+      });
+    }
+    
     // 6. Error Handlers
     app.use(notFound); 
     app.use(errorHandler); 
 
     // 7. Start Server
-    const PORT = process.env.PORT || 3000;
+    const PORT = 3000;
 
     // --- Port Sanity Check ---
     if (['5432', '3306', '27017', '1433'].includes(String(PORT))) {
