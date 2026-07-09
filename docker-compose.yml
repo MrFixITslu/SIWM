@@ -1,5 +1,6 @@
 services:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   siwm:
     build:
       context: .
@@ -8,6 +9,8 @@ services:
     ports:
       - "3060:4000"
 =======
+=======
+>>>>>>> Stashed changes
   frontend:
     build:
       context: .
@@ -29,6 +32,9 @@ services:
     container_name: siwm-backend
     expose:
       - "4000"
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     environment:
       - NODE_ENV=production
