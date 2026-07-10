@@ -2,6 +2,7 @@
 
 ## What I found
 
+This repo was an AI Studio-generated prototype. It compiled and ran fine,
 but had several issues that are fine for a sandbox demo and dangerous in
 production:
 
