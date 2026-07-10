@@ -1,25 +1,31 @@
-FROM node:20-alpine AS builder
+# Single-container production image: one Express process serves the API
+# and the built frontend on one port, matching this app's other deployments
+# behind Nginx Proxy Manager on the shared proxy_network.
+
+# ---- Stage 1: build ----
+FROM node:20-slim AS builder
 WORKDIR /app
-COPY package.json package-lock.json* ./
+
+COPY package*.json tsconfig.json ./
 RUN npm ci
+
 COPY . .
+# Produces dist/index.html + dist/assets (vite) and dist/server.cjs (esbuild)
 RUN npm run build
 
-FROM node:20-alpine
+# ---- Stage 2: production runtime ----
+FROM node:20-slim
 WORKDIR /app
+ENV NODE_ENV=production
 
-RUN apk add --no-cache netcat-openbsd wget
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
-COPY --from=builder /app/dist /app/dist
-COPY backend /app/backend
-COPY start-container.sh /start-container.sh
+COPY --from=builder /app/dist ./dist
 
-RUN cd /app/backend && npm ci --omit=dev \
-    && chmod +x /start-container.sh
+# Run as the non-root user already present in the base image, not root.
+RUN chown -R node:node /app
+USER node
 
-EXPOSE 4000
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
-  CMD wget -qO- http://127.0.0.1:4000 || exit 1
-
-CMD ["/start-container.sh"]
+EXPOSE 4001
+CMD ["node", "dist/server.cjs"]

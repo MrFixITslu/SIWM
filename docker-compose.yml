@@ -1,64 +1,24 @@
 services:
-  frontend:
+  siwm:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: siwm-frontend
-    ports:
-      - "3060:80"
-    depends_on:
-      - backend
-    networks:
-      - internal
-      - proxy_network
+    container_name: siwm
     restart: unless-stopped
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: siwm-backend
-    expose:
-      - "4000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
-      - PORT=4000
-      - JWT_SECRET=${JWT_SECRET}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - EMAIL_HOST=${EMAIL_HOST}
-      - EMAIL_PORT=${EMAIL_PORT}
-      - EMAIL_USER=${EMAIL_USER}
-      - EMAIL_PASS=${EMAIL_PASS}
-    depends_on:
-      - postgres
+      # If your Nginx Proxy Manager host for siwm.v79sl.duckdns.org already
+      # targets a specific port (e.g. 3060 from an earlier deployment), set
+      # PORT to that same value in .env so you don't have to touch NPM.
+      - PORT=${PORT:-4001}
     networks:
-      - internal
       - proxy_network
-    restart: unless-stopped
-
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/create_system_settings_table.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - internal
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
+    # No ports: published to the host on purpose - Nginx Proxy Manager reaches
+    # this container over proxy_network by container name + PORT, the same
+    # pattern used by this operator's other apps (FFPRO, GIBD, Tiquet).
 
 networks:
-  internal:
-    driver: bridge
   proxy_network:
     external: true
