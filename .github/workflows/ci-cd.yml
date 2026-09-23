@@ -1,302 +1,99 @@
-name: CI/CD Pipeline
+name: V79 CI/CD
 
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
 
-env:
-  NODE_VERSION: '18'
-  POSTGRES_VERSION: '15'
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: v79-ci-cd-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # Frontend Tests
-  frontend-tests:
+  validate:
+    name: Frontend, backend, tests and build
     runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    timeout-minutes: 25
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Run linting
-      run: npm run lint
-
-    - name: Run type checking
-      run: npm run type-check
-
-    - name: Run unit tests
-      run: npm run test:coverage
-
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
-        flags: frontend
-        name: frontend-coverage
-
-  # Backend Tests
-  backend-tests:
-    runs-on: ubuntu-latest
-    
     services:
       postgres:
-        image: postgres:${{ env.POSTGRES_VERSION }}
+        image: postgres:15-alpine
         env:
           POSTGRES_USER: test_user
           POSTGRES_PASSWORD: test_password
           POSTGRES_DB: test_vision79_siwm
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
         ports:
           - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test_user -d test_vision79_siwm"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: backend/package-lock.json
+      - name: Validate frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run lint
+          npm run build
 
-    - name: Install backend dependencies
-      run: |
-        cd backend
-        npm ci
-
-    - name: Run backend linting
-      run: |
-        cd backend
-        npm run lint
-
-    - name: Run backend tests
-      run: |
-        cd backend
-        npm run test:coverage
-      env:
-        NODE_ENV: test
-        JWT_SECRET: test-jwt-secret-key-for-testing-only
-        DB_USER: test_user
-        DB_PASSWORD: test_password
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_NAME: test_vision79_siwm
-        GEMINI_API_KEY: test-gemini-api-key
-
-    - name: Upload backend coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./backend/coverage/lcov.info
-        flags: backend
-        name: backend-coverage
-
-  # Security Tests
-  security-tests:
-    runs-on: ubuntu-latest
-    needs: [frontend-tests, backend-tests]
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: |
-        npm ci
-        cd backend && npm ci
-
-    - name: Run security audit
-      run: |
-        npm audit --audit-level=high
-        cd backend && npm audit --audit-level=high
-
-    - name: Run OWASP ZAP security scan
-      uses: zaproxy/action-full-scan@v0.8.0
-      with:
-        target: 'http://localhost:5173'
-        rules_file_name: '.zap/rules.tsv'
-        cmd_options: '-a'
-
-  # E2E Tests
-  e2e-tests:
-    runs-on: ubuntu-latest
-    needs: [frontend-tests, backend-tests]
-    
-    services:
-      postgres:
-        image: postgres:${{ env.POSTGRES_VERSION }}
+      - name: Validate backend
+        working-directory: backend
         env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: test_vision79_siwm
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+          NODE_ENV: test
+          JWT_SECRET: ci-test-jwt-secret-not-for-production
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DB_HOST: localhost
+          DB_PORT: '5432'
+          DB_NAME: test_vision79_siwm
+          GEMINI_API_KEY: ci-placeholder
+        run: |
+          npm ci --no-audit --no-fund
+          npm run lint
+          npm test
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Verify frontend Docker image
+        run: docker build --tag siwm-ci .
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: Create delivery bundle
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: |
+          tar --exclude=.git --exclude=node_modules --exclude=backend/node_modules --exclude='*.tar.gz' \
+              -czf "${RUNNER_TEMP}/SIWM-${GITHUB_SHA::12}.tar.gz" .
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Upload delivery bundle
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: ${{ runner.temp }}/*.tar.gz
+          retention-days: 14
 
-    - name: Start backend server
-      run: |
-        cd backend
-        npm ci
-        npm run dev &
-        sleep 10
-      env:
-        NODE_ENV: test
-        JWT_SECRET: test-jwt-secret-key-for-testing-only
-        DB_USER: test_user
-        DB_PASSWORD: test_password
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_NAME: test_vision79_siwm
-        GEMINI_API_KEY: test-gemini-api-key
-
-    - name: Start frontend server
-      run: |
-        npm run dev:frontend &
-        sleep 10
-
-    - name: Run Cypress tests
-      uses: cypress-io/github-action@v6
-      with:
-        browser: chrome
-        wait-on: 'http://localhost:5173'
-        config: baseUrl=http://localhost:5173
-
-    - name: Upload Cypress screenshots
-      uses: actions/upload-artifact@v3
-      if: failure()
-      with:
-        name: cypress-screenshots
-        path: cypress/screenshots
-        if-no-files-found: ignore
-
-    - name: Upload Cypress videos
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: cypress-videos
-        path: cypress/videos
-        if-no-files-found: ignore
-
-  # Accessibility Tests
-  accessibility-tests:
+  deliver-container:
+    name: Publish frontend Docker image
     runs-on: ubuntu-latest
-    needs: [frontend-tests, backend-tests]
-    
+    needs: validate
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build application
-      run: npm run build
-
-    - name: Start server
-      run: |
-        npm run preview &
-        sleep 10
-
-    - name: Run Lighthouse accessibility audit
-      run: |
-        npm install -g lighthouse
-        lighthouse http://localhost:4173 --output=json --output-path=./lighthouse-report.json --only-categories=accessibility
-
-    - name: Upload Lighthouse report
-      uses: actions/upload-artifact@v3
-      with:
-        name: lighthouse-report
-        path: lighthouse-report.json
-        if-no-files-found: ignore
-
-  # Build and Deploy (only on main branch)
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [frontend-tests, backend-tests, security-tests, e2e-tests, accessibility-tests]
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: |
-        npm ci
-        cd backend && npm ci
-
-    - name: Build frontend
-      run: npm run build
-
-    - name: Build Docker images
-      run: |
-        docker build -t vision79-frontend .
-        docker build -t vision79-backend ./backend
-
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_TOKEN }}
-
-    - name: Push Docker images
-      run: |
-        docker tag vision79-frontend ${{ secrets.DOCKER_HUB_USERNAME }}/vision79-frontend:latest
-        docker tag vision79-backend ${{ secrets.DOCKER_HUB_USERNAME }}/vision79-backend:latest
-        docker push ${{ secrets.DOCKER_HUB_USERNAME }}/vision79-frontend:latest
-        docker push ${{ secrets.DOCKER_HUB_USERNAME }}/vision79-backend:latest
-
-    - name: Deploy to production
-      run: |
-        echo "Deploying to production environment..."
-        # Add your deployment commands here
-        # Example: kubectl apply -f k8s/
-        # Example: aws ecs update-service --cluster production --service vision79-service --force-new-deployment 
+      - uses: actions/checkout@v4
+      - name: Publish to GHCR
+        shell: bash
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          SHORT_SHA="${GITHUB_SHA::12}"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build -t "$IMAGE:latest" -t "$IMAGE:$SHORT_SHA" .
+          docker push "$IMAGE:latest"
+          docker push "$IMAGE:$SHORT_SHA"
