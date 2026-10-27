@@ -1,6 +1,7 @@
 import pg from 'pg';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import { assertStorageFallbackAllowed } from './storageAvailabilityPolicy.js';
 import { 
   INITIAL_CATEGORIES, 
   INITIAL_SUPPLIERS, 
@@ -178,7 +179,8 @@ export async function initDb() {
     await runMigrations();
   } catch (err: any) {
     console.warn('\n⚠️ WARNING: PostgreSQL connection failed or timed out:', err.message);
-    console.warn('Falling back to memory-backed multi-tenant storage for sandbox AI Studio preview.\n');
+    assertStorageFallbackAllowed(process.env.NODE_ENV === 'production');
+    console.warn('Development preview ONLY: using temporary memory-backed data.');
     usePostgres = false;
   }
 }
