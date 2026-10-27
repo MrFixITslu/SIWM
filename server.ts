@@ -872,7 +872,10 @@ async function startServer() {
 
       // OAuth and other legacy passwordless identities cannot substitute static confirmation words.
       // Until a real recently-verified IdP step-up is supported, fail closed.
-      if (user.id !== req.user.id) return res.status(403).json({ error: 'Identity mismatch.' });
+      if (user.id !== req.user.id) {
+        res.status(403).json({ error: 'Identity mismatch.' });
+        return;
+      }
       const isVerified = await verifyWarehouseDestructiveAction(
         { id: req.user.id, warehouseId: req.user.warehouseId },
         user, role, password
