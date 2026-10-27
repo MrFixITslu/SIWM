@@ -23,7 +23,7 @@ jobs:
           npm install -g npm@11.9.0
           npm ci --no-audit --no-fund
       - name: Test destructive and authentication boundaries
-        run: node --import tsx --test tests/security-destructive-policy.test.mjs
+        run: node --import tsx --test tests/security-destructive-policy.test.mjs tests/storageAvailabilityPolicy.test.mjs
       - name: Typecheck and build
         run: |
           npm run lint
