@@ -3,6 +3,7 @@ import path from 'path';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
+import { verifyWarehouseDestructiveAction } from './security-destructive-policy.js';
 import { 
   initDb, 
   getItems, 
@@ -823,9 +824,10 @@ async function startServer() {
         res.status(403).json({ error: 'Warehouse administrator approval required.' });
         return;
       }
-      const isVerified = Boolean(user.passwordHash)
-        && typeof password === 'string'
-        && await bcrypt.compare(password, user.passwordHash);
+      const isVerified = await verifyWarehouseDestructiveAction(
+        { id: req.user.id, warehouseId: req.user.warehouseId },
+        user, role, password
+      );
 
       if (!isVerified) {
         res.status(401).json({ error: 'Incorrect verification password. Authorization denied.' });
@@ -871,9 +873,10 @@ async function startServer() {
       // OAuth and other legacy passwordless identities cannot substitute static confirmation words.
       // Until a real recently-verified IdP step-up is supported, fail closed.
       if (user.id !== req.user.id) return res.status(403).json({ error: 'Identity mismatch.' });
-      const isVerified = Boolean(user.passwordHash)
-        && typeof password === 'string'
-        && await bcrypt.compare(password, user.passwordHash);
+      const isVerified = await verifyWarehouseDestructiveAction(
+        { id: req.user.id, warehouseId: req.user.warehouseId },
+        user, role, password
+      );
 
       if (!isVerified) {
         res.status(401).json({ error: 'Incorrect verification password. Authorization denied.' });
