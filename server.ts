@@ -2,6 +2,8 @@ import express from 'express';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
+import { verifyWarehouseDestructiveAction } from './security-destructive-policy.js';
 import { 
   initDb, 
   getItems, 
@@ -34,10 +36,11 @@ import {
 } from './server-db.js';
 
 function resolveJwtSecret(): string {
-  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  const configured = process.env.JWT_SECRET;
+  if (configured && (process.env.NODE_ENV !== 'production' || Buffer.byteLength(configured, 'utf8') >= 32)) return configured;
   if (process.env.NODE_ENV === 'production') {
     throw new Error(
-      'FATAL: JWT_SECRET environment variable is required in production. ' +
+      'FATAL: JWT_SECRET of at least 32 bytes is required in production. ' +
       'Refusing to start with a hardcoded/default secret. Set JWT_SECRET in your .env file.'
     );
   }
@@ -93,8 +96,13 @@ async function startServer() {
     try {
       const { email, password, name, warehouseOption, warehouseName, warehouseAddress, warehouseCode } = req.body;
       
-      if (!email || !name) {
+      if (typeof email !== 'string' || !email.trim() || typeof name !== 'string' || !name.trim()) {
         res.status(400).json({ error: 'Email and Name are required.' });
+        return;
+      }
+      // Social sign-in is disabled. Never issue a passwordless email JWT.
+      if (typeof password !== 'string' || password.length < 15 || password.length > 128) {
+        res.status(400).json({ error: 'Please use an account password between 15 and 128 characters.' });
         return;
       }
 
@@ -116,9 +124,9 @@ async function startServer() {
           res.status(400).json({ error: 'Warehouse name is required to create a new warehouse.' });
           return;
         }
-        warehouseId = `wh-${Date.now()}`;
-        // Generate code: e.g. WH-123456
-        const code = `WH-${Math.floor(100000 + Math.random() * 900000)}`;
+        warehouseId = `wh-${crypto.randomUUID()}`;
+        // Warehouse invitation codes are secrets: never use Math.random or a 6-digit guessable value.
+        const code = `WH-${crypto.randomBytes(16).toString('hex').toUpperCase()}`;
         warehouseDetails = await createWarehouse({
           id: warehouseId,
           name: warehouseName,
@@ -144,9 +152,9 @@ async function startServer() {
         return;
       }
 
-      const passwordHash = password ? await bcrypt.hash(password, 10) : undefined;
+      const passwordHash = await bcrypt.hash(password, 12);
       const newUser = {
-        id: `usr-${Date.now()}`,
+        id: `usr-${crypto.randomUUID()}`,
         email: normEmail,
         passwordHash,
         name,
@@ -809,13 +817,17 @@ async function startServer() {
         return;
       }
 
-      let isVerified = false;
-      if (user.passwordHash) {
-        isVerified = await bcrypt.compare(password, user.passwordHash);
-      } else {
-        const normPass = password.trim().toLowerCase();
-        isVerified = (normPass === 'oauth' || normPass === 'confirm' || normPass === 'reset' || normPass === user.email.toLowerCase());
+      // A warehouse reset requires current admin membership AND genuine password verification.
+      // Passwordless/legacy identities must use an independently verified step-up flow; no guessable fallback.
+      const role = await getUserRoleInWarehouse(req.user.id, req.user.warehouseId);
+      if (role !== 'admin' || user.id !== req.user.id) {
+        res.status(403).json({ error: 'Warehouse administrator approval required.' });
+        return;
       }
+      const isVerified = await verifyWarehouseDestructiveAction(
+        { id: req.user.id, warehouseId: req.user.warehouseId },
+        user, role, password
+      );
 
       if (!isVerified) {
         res.status(401).json({ error: 'Incorrect verification password. Authorization denied.' });
@@ -858,18 +870,16 @@ async function startServer() {
         return;
       }
 
-      // Re-verify identity before a destructive action, same as the scoped reset flow.
-      let isVerified = false;
-      if (user.passwordHash) {
-        if (!password) {
-          res.status(400).json({ error: 'Password confirmation is required.' });
-          return;
-        }
-        isVerified = await bcrypt.compare(password, user.passwordHash);
-      } else {
-        const normPass = (password || '').trim().toLowerCase();
-        isVerified = (normPass === 'confirm' || normPass === 'reset' || normPass === user.email.toLowerCase());
+      // OAuth and other legacy passwordless identities cannot substitute static confirmation words.
+      // Until a real recently-verified IdP step-up is supported, fail closed.
+      if (user.id !== req.user.id) {
+        res.status(403).json({ error: 'Identity mismatch.' });
+        return;
       }
+      const isVerified = await verifyWarehouseDestructiveAction(
+        { id: req.user.id, warehouseId: req.user.warehouseId },
+        user, role, password
+      );
 
       if (!isVerified) {
         res.status(401).json({ error: 'Incorrect verification password. Authorization denied.' });
